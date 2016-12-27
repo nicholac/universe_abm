@@ -71,6 +71,7 @@ def generateUniverse(save):
     #Save out the data
     if save == True:
         print 'Saving Universe...'
+        #TODO: Solve the Q pickle problem
         saveUniverse()
     print 'Generate Universe Complete'
 
@@ -145,9 +146,10 @@ def generateClans():
     #Just one for now - at the first star system planet
     c = baseClan(world.stars[0].starIdx, world.stars[0].planets[0].position,
                  0, len(world.clans))
-    #Populate their blank resource knowledge
+    #Populate their blank resource knowledge and explorer job Q
     for idx, s in enumerate(world.stars):
         c.resourceKnowledge[idx] = {}
+        c.explorerQ.append((idx, world.starCoords[idx]))
     world.clans.append(c)
     print 'Done Generating Clans'
 

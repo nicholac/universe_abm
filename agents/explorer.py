@@ -56,12 +56,16 @@ class explorer(baseAgent):
                 return
             #Do we have a target star system yet?
             if self.destination == None:
-                print '{}'.format('Getting next Job')
-                #Get clan next closest unknown
-                closestStarUk = world.clans[self.clanId].closestUnknownStar(self.position)
+                #Get clan next unknown from Q
+                #closestStarUk = world.clans[self.clanId].closestUnknownStar(self.position)
+                try:
+                    nextStar = world.clans[self.clanId].explorerQ.popleft()
+                except IndexError:
+                    #Wait in system until clan put more jobs into the Q
+                    return
                 #Set Dest - its not in the system we are i so this is the jump out star
                 self.destination = world.starCoords[self.currStarIdx]
-                self.targetStar = closestStarUk[0]
+                self.targetStar = nextStar[0]
                 return
             #Are we close enough to current star to jump?
             if dist(self.position, self.destination) < self.starJumpDist:
@@ -118,7 +122,6 @@ class explorer(baseAgent):
                     self.destination = None
                     self.targetPlanet = None
                     self.targetStar = None
-                    print '{}'.format('Arrived home, dumped knowledge')
                     return
                 else:
                     #Move closer to target planet
@@ -137,7 +140,6 @@ class explorer(baseAgent):
                 return
         else:
             return
-        #Check for our resource type in range
 
 
 

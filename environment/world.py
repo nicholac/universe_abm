@@ -82,7 +82,7 @@ clans = []
 
 #Agent Globals
 #Max Population - initially
-maxPopn = 1
+maxPopn = 10
 #Mix of types [ex, fa, ha, tr] (percentages of total popn)
 agentTypeMix = [100.0, 0.0, 0.0, 0.0]
 #Agent Base visibility = AU

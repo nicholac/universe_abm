@@ -5,8 +5,10 @@ Created on 25 Dec 2016
 '''
 
 import numpy as np
+import collections
 from environment.sensing import closestStar, closestStarSubSet
 from environment import world
+
 
 class baseClan(object):
     '''
@@ -35,6 +37,9 @@ class baseClan(object):
         #Resource Knowledge {starIdx:{planetIdx:{'rawMat':X, 'energy':Y}}, planetIdx:{'rawMat':X, 'energy':Y}}}
         #Initially populated with all stars - and no knowledge
         self.resourceKnowledge = {}
+        #Agent job queues
+        #Explorer - (starIdx, starCoords)
+        self.explorerQ = collections.deque()
 
 
     def popn(self):

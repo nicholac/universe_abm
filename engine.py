@@ -66,7 +66,6 @@ class abm(object):
                     print 'Clan Home Star:{}'.format(world.starCoords[world.clans[a.clanId].originStarIdx])
                     print 'Pos:{}'.format(a.position)
                     print 'Target:{}'.format(a.destination)
-                    print 'Vel:{}'.format(a.velocity)
                     try:
                         print 'Dist:{}'.format(np.linalg.norm(a.destination-a.position))
                     except:
