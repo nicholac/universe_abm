@@ -59,7 +59,6 @@ class baseAgent(object):
                                                                         (AgentUID, AgentUID, {'social':0.1})
                                                                         (AgentUID, AgentUID, {'family':0.1})]
         '''
-        print links
         world.socialNet.add_edges_from(links)
 
 

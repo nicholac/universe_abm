@@ -126,6 +126,7 @@ clans = {}
 
 #Agent Globals - unique agent ID's that relate to node id's
 agents = {}
+deadAgents = {}
 #Max Population - initially
 maxPopn = 2
 #Mix of types [ex, fa, ha, tr] (percentages of total popn)

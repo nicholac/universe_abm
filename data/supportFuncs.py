@@ -21,6 +21,7 @@ from clans.base import baseClan
 from data.tradableTypes import allTradables
 from data.agentTypes import allAgents
 from data.socialLinkTypes import allLinks
+from datetime import datetime
 
 def generateUniverse(save):
     '''
@@ -224,6 +225,38 @@ def generateAgents():
             world.clans[clanUID].agents.append(agentUID)
 
     print 'Done Generating Agents'
+
+
+def delAgent(agentUID, reason):
+    '''
+    Remove an Agent from the universe:
+        - Class
+        - Social Network
+        - Clan
+        - Star system
+        - Record death
+    '''
+    try:
+        world.socialNet.remove_node(agentUID)
+    except:
+        print 'Failed to Delete an agent from social Net: {}'.format(agentUID)
+    #Clan
+    try:
+        idx = world.clans[world.agents[agentUID].clanID].agents.index(agentUID)
+        world.clans[world.agents[agentUID].clanID].agents.pop(idx)
+    except:
+        print 'Failed to Delete an agent from Clan: {}'.format(agentUID)
+    #Star Sys - horrific!
+    try:
+        world.stars[world.agents[agentUID].currStarSys].pop(world.stars[world.agents[agentUID].currStarSys].agents.index(agentUID))
+    except:
+        print 'Failed to Delete an agent from Star Sys: {}'.format(agentUID)
+    #Class
+    world.agents.pop(agentUID)
+    #Record death
+    world.deadAgents[agentUID] = {'reason':reason,
+                                  'dtg':datetime.now().isoformat()}
+
 
 
 
