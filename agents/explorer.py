@@ -33,8 +33,6 @@ class explorer(baseAgent):
                       7:{'store':0.0, 'capacity':1000000.0}}
         #TODO: Energy consumption rate
         self.consumes = {7:{'consumeRate':1.0}}
-
-        #self.store = {'id':resourceType, 'strength':0.0, 'store':[], 'name':allTradables()[resourceType]}
         #Max Speed in System - LY / Sec
         self.maxVelMag = world.genAgentMaxVelMag()
         #What we are doing now - [moveStar, visitPlanets, checkResources, returnClan, depositKnowledge]
@@ -50,6 +48,8 @@ class explorer(baseAgent):
         '''
         Conduct the Agents Actions
         '''
+        #Social net
+        self.chat()
         #Criminal Avoidance
         if self.detectCriminal():
             #Swap to avoiding Criminal

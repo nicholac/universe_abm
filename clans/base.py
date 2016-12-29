@@ -28,7 +28,7 @@ class baseClan(object):
         self.originStarIdx = starIdx
         #Origin Planet
         self.originPlanetIdx = planetIdx
-        #Array of all the clans agents - index lookup to world.agents
+        #Array of all the clans agents - dict key lookup to world.agents
         self.agents = []
         #n Agents * n Agents matrix of link strength (2d array)
         self.societyNet = np.zeros((len(self.agents), len(self.agents)))

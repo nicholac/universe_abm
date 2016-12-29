@@ -50,6 +50,19 @@ class baseAgent(object):
         self.maxServiceWait = 100
 
 
+    def initSocialNet(self, links):
+        '''
+        When creating a new agent initialise the agents social network
+            - Family links
+            - Clan links(2,3,{'weight':8})
+        ::param links - array of links we can use with networkX, e.g. [(clanUID, AgentUID, {'clan':0.1}),
+                                                                        (AgentUID, AgentUID, {'social':0.1})
+                                                                        (AgentUID, AgentUID, {'family':0.1})]
+        '''
+        print links
+        world.socialNet.add_edges_from(links)
+
+
     def starJump(self, targetStarIdx):
         '''
         Jump an agent between star systems
@@ -204,6 +217,26 @@ class baseAgent(object):
             if self.store[k] <= 0.0:
                 return (False, k)
         return (True, 0)
+
+
+    def chat(self):
+        '''
+        Basic social network formation & degredation function
+        If there are other agents in range:
+            - of the same clan then form a link - or strengthen it
+            - of a different clan then degrade the individuals link (and potentially the overall clans)
+        '''
+        #Just search the agents in the system to make this faster
+        for aIdx in world.stars[self.currStarIdx].agentsInSys:
+            if np.linalg.norm(self.position-world.agents[aIdx].position) < self.visibilityRange:
+                #Own Clan
+                if aIdx in world.clans[self.clanId].agents:
+                    #Strengthen or create - by probability (higher chance of good)
+                    pass
+                #Other clan
+                else:
+                    #Degrade or create - by probability (higher chance of bad)
+                    pass
 
 
 

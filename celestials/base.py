@@ -30,8 +30,8 @@ class basePlanet(object):
         self.typeId = typeId
         self.typeName = planets()[self.typeId]
         #Resources - standardised
-        self.store = {7:{'store':energyStore, 'capacity':10000000.0},
-                      8:{'store':rawMatStore, 'capacity':10000000.0}}
+        self.store = {7:{'store':10000000.0, 'capacity':10000000.0},
+                      8:{'store':10000000.0, 'capacity':10000000.0}}
         #Flag for resources depleted
         self.depleted = False
 
@@ -74,7 +74,7 @@ class baseStar(object):
         self.planets = []
         #Planet Coords - for ease / rapid searching
         self.planetCoords = None
-        #Agents in system
+        #Agents in system (indexes)
         self.agentsInSys = []
 
 

@@ -7,6 +7,23 @@ Basic data about the world
 
 '''
 import numpy as np
+import networkx as nx
+
+#Global Clan UID List - popped on creation, appended back to pool on death
+clanUIDs = range(0, 1000)
+def nextClanUID():
+    return clanUIDs.pop(clanUIDs.index(np.random.choice(clanUIDs)))
+
+def recycleClanUID(uid):
+    clanUIDs.append(uid)
+
+#Global Agent UID List - popped on creation, appended back to pool on death
+agentUIDs = range(1001, 1000000)
+def nextAgentUID():
+    return agentUIDs.pop(agentUIDs.index(np.random.choice(agentUIDs)))
+
+def recycleAgentUID(uid):
+    agentUIDs.append(uid)
 
 #UNITS - Astro Units to Light Years
 def au2Ly(au):
@@ -105,9 +122,10 @@ runTime = 0.0
 numClans = 1
 
 #Clan Class storage
-clans = []
+clans = {}
 
-#Agent Globals
+#Agent Globals - unique agent ID's that relate to node id's
+agents = {}
 #Max Population - initially
 maxPopn = 2
 #Mix of types [ex, fa, ha, tr] (percentages of total popn)
@@ -115,12 +133,14 @@ agentTypeMix = [50.0, 0.0, 50.0, 0.0]
 #Agent Base visibility = AU
 agentBaseVis = au2Ly(1.0)
 agentReprodChance = np.random.choice(np.linspace(0.1, 0.7))
-agents = []
 
 
-#Society Globals
+#Society Globals - Nodes are integers of agent or clan UID's - the actual classes can be accessed via the global dict
+socialNet = nx.Graph()
 #Rate at which social links age (link strength per tick)
-linkAgeRate = 0.01
+socialLinkAgeRate = 0.01
+#Clan Link strength - base link strength between agent and clan (Clan links dont age)
+clanLinkStren = 0.1
 
 
 

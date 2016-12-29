@@ -61,7 +61,8 @@ class abm(object):
             while True:
                 cnt+=1
                 print 'Step {}'.format(cnt)
-                for a in world.agents:
+                for k in world.agents.keys():
+                    a = world.agents[k]
                     a.actions()
                     print '============'
                     print 'Agent:{} {}'.format(a.agentId, a.agentName)
@@ -78,7 +79,8 @@ class abm(object):
                         print 'Stores: {}'.format(a.store)
                     except:
                         pass
-                    print 'Clan Stores:{}'.format(world.clans[0].store)
+                    for ck in world.clans.keys():
+                        print 'Clan Stores:{}'.format(world.clans[ck].store)
                     print '============'
                 sleep(world.timeStep)
         except KeyboardInterrupt:

@@ -19,6 +19,8 @@ from agents.harvestor import harvestor
 from agents.trader import trader
 from clans.base import baseClan
 from data.tradableTypes import allTradables
+from data.agentTypes import allAgents
+from data.socialLinkTypes import allLinks
 
 def generateUniverse(save):
     '''
@@ -98,7 +100,10 @@ def saveUniverse():
                 'agentReprodChance':world.agentReprodChance,
                 'agents':world.agents,
                 'clans':world.clans,
-                'linkAgeRate':world.linkAgeRate
+                'socialLinkAgeRate':world.socialLinkAgeRate,
+                'socialNet':world.socialNet,
+                'clanUIDs':world.clanUIDs,
+                'agentUIDs':world.agentUIDs
                }
     #Time based FN if we want no overwrites in future
     timeFn = str(int(time()))
@@ -134,7 +139,10 @@ def loadUniverse():
     world.agentReprodChance = worldData['agentReprodChance']
     world.agents = worldData['agents']
     world.clans = worldData['clans']
-    world.linkAgeRate = worldData['linkAgeRate']
+    world.linkAgeRate = worldData['socialLinkAgeRate']
+    world.socialNet = worldData['socialNet']
+    world.clanUIDs = worldData['clanUIDs']
+    world.agentUIDs = worldData['agentUIDs']
     print 'Done Loading Universe'
 
 
@@ -145,13 +153,17 @@ def generateClans():
     print 'Generating Clans...'
     #Just one for now - at the first star system planet
     rates = world.genClanRates()
+    clanUID = world.nextClanUID()
     c = baseClan(world.stars[0].starIdx, world.stars[0].planets[0].position,
-                 0, len(world.clans), rates[0])
+                 0, clanUID, rates[0])
     #Populate their blank resource knowledge and explorer job Q
     for idx, s in enumerate(world.stars):
         c.resourceKnowledge[idx] = {}
         c.explorerQ.append((idx, world.starCoords[idx]))
-    world.clans.append(c)
+    #Add to dict lookup
+    world.clans[clanUID] = c
+    #Add Clan node into social graph
+    world.socialNet.add_node(clanUID, type='clan')
     print 'Done Generating Clans'
 
 
@@ -165,46 +177,51 @@ def generateAgents():
     '''
     print 'Generating Agents...'
     #Mix of types [ex, fa, ha, tr] (percentages of total popn)
+    #Single clan for now:
+    clanUID = world.clans.keys()[0]
     for idx, t in enumerate(world.agentTypeMix):
         for a in range(int((t/100.0)*world.maxPopn)):
+            #Capacities & Rates
+            caps = world.genHarvestorCaps()
+            rates = world.genHarvestorRates()
+            #Get the next agent UID
+            agentUID = world.nextAgentUID()
             if idx == 0:
                 #Explorer
-                ex = explorer(0, len(world.agents),
-                              world.clans[0].originCoords,
-                              world.clans[0].clanId,
+                a = explorer(0, agentUID,
+                              world.clans[clanUID].originCoords,
+                              clanUID,
                               np.random.choice([9,10]))
-                world.agents.append(ex)
-                #Clan agents are idx lookups
-                world.clans[0].agents.append(idx)
             elif idx == 1:
                 #Fabricator
-                fa = fabricator(1, len(world.agents),
-                              world.clans[0].originCoords,
-                              world.clans[0].clanId,
+                a = fabricator(1, agentUID,
+                              world.clans[clanUID].originCoords,
+                              clanUID,
                               np.random.choice(allTradables().keys()))
-                world.agents.append(fa)
-                #Clan agents are idx lookups
-                world.clans[0].agents.append(idx)
             elif idx == 2:
                 #Harvestor
                 caps = world.genHarvestorCaps()
                 rates = world.genHarvestorRates()
-                ha = harvestor(2, len(world.agents),
-                              world.clans[0].originCoords,
-                              world.clans[0].clanId,
+                a = harvestor(2, agentUID,
+                              world.clans[clanUID].originCoords,
+                              clanUID,
                               caps[0], caps[1], caps[2],
                               rates[0], rates[1], rates[2], rates[3])
-                world.agents.append(ha)
-                #Clan agents are idx lookups
-                world.clans[0].agents.append(idx)
             elif idx == 3:
                 #Trader
-                tr = trader(3, len(world.agents),
-                              world.clans[0].originCoords,
-                              world.clans[0].clanId)
-                world.agents.append(tr)
-                #Clan agents are idx lookups
-                world.clans[0].agents.append(idx)
+                a = trader(3, agentUID,
+                              world.clans[clanUID].originCoords,
+                              world.clans.keys()[0])
+            else:
+                pass
+            #Add as node in world graph
+            world.socialNet.add_node(agentUID, type='agent_{}'.format(allAgents()[idx]))
+            #Initialise the agents social network link with clan here (its a new universe)
+            a.initSocialNet([[agentUID, clanUID, {'type':allLinks()[0]}]])
+            #Add to world lookup
+            world.agents[agentUID] = a
+            #Add to clan lookup
+            world.clans[clanUID].agents.append(agentUID)
 
     print 'Done Generating Agents'
 
