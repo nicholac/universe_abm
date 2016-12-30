@@ -48,8 +48,6 @@ class explorer(baseAgent):
         '''
         Conduct the Agents Actions
         '''
-        #Social net
-        self.chat()
         #Criminal Avoidance
         if self.detectCriminal():
             #Swap to avoiding Criminal

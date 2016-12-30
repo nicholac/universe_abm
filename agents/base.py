@@ -230,10 +230,10 @@ class baseAgent(object):
         return (True, 0)
 
 
-    def chat(self):
+    def chat(self, otherAgentId):
         '''
         Basic social network formation & degredation function
-        If there are other agents in range:
+        For the interacting agents
             - of the same clan then form a link - or strengthen it
             - of a different clan then degrade the individuals link (and potentially the overall clans)
         Caveats:
@@ -244,56 +244,55 @@ class baseAgent(object):
         '''
         #Firstly some chance of even interacting
         if np.random.choice(world.baseSocialLinkCreationSplit) == True:
-            #Search the agents in the system to make this faster
-            for aId in world.stars[self.currStarIdx].agentsInSys:
-                if aId == self.agentId:
-                    continue
-                if np.linalg.norm(self.position-world.agents[aId].position) < self.visibilityRange:
-                    #Own Clan
-                    if aId in world.clans[self.clanId].agents:
-                        #Strengthen or create - by probability (higher chance of good)
-                        print 'Stronger: {}, {}'.format(self.agentId, aId)
-                        stren = np.random.choice(np.linspace(world.chatLinkMinStrength,
-                                                             world.chatLinkMaxStrength, 20),
-                                                            p=world.positiveProbsPow(20))
-                        try:
-                            #Check if it exists
-                            if not world.socialNet[self.agentId].has_key(aId):
-                                #Add the new link to the social net
-                                world.socialNet.add_edge(self.agentId, aId, {'social':stren})
-                            else:
-                                #Change existing - check for boundary
-                                if world.socialNet[self.agentId][aId]['social']+stren > world.socialLinkMaxStren:
-                                    world.socialNet[self.agentId][aId]['social'] = world.socialLinkMaxStren
-                                elif world.socialNet[self.agentId][aId]['social']+stren < world.socialLinkMinStren:
-                                    world.socialNet[self.agentId][aId]['social'] = world.socialLinkMinStren
-                                else:
-                                    world.socialNet[self.agentId][aId]['social']+=stren
-                        except Exception, err:
-                            print 'Failed to create social link: {}, {}, {}'.format(self.agentId, aId, err)
-                    #Other clan
+            if otherAgentId == self.agentId:
+                #Dont interact with self
+                return
+            #if np.linalg.norm(self.position-world.agents[aId].position) < self.visibilityRange:
+            #Own Clan
+            if otherAgentId in world.clans[self.clanId].agents:
+                #Strengthen or create - by probability (higher chance of good)
+                #print 'Stronger: {}, {}'.format(self.agentId, aId)
+                stren = np.random.choice(np.linspace(world.chatLinkMinStrength,
+                                                     world.chatLinkMaxStrength, 20),
+                                                    p=world.positiveProbsPow(20))
+                try:
+                    #Check if it exists
+                    if not world.socialNet[self.agentId].has_key(otherAgentId):
+                        #Add the new link to the social net
+                        world.socialNet.add_edge(self.agentId, otherAgentId, {'social':stren})
                     else:
-                        try:
-                            #Degrade or create - by probability (higher chance of bad)
-                            print 'Weaker: {}, {}'.format(self.agentId, aId)
-                            stren = np.random.choice(np.linspace(world.chatLinkMinStrength,
-                                                                 world.chatLinkMaxStrength, 20),
-                                                                p=world.negativeProbsPow(20))
-                            #Check if it exists
-                            if not world.socialNet[self.agentId].has_key(aId):
-                                #Add the new link to the social net
-                                world.socialNet.add_edge(self.agentId, aId,
-                                                               {allLinks()[1]:stren})
-                            else:
-                                #Change existing - check for boundary
-                                if world.socialNet[self.agentId][aId]['social']+stren > world.socialLinkMaxStren:
-                                    world.socialNet[self.agentId][aId]['social'] = world.socialLinkMaxStren
-                                elif world.socialNet[self.agentId][aId]['social']+stren < world.socialLinkMinStren:
-                                    world.socialNet[self.agentId][aId]['social'] = world.socialLinkMinStren
-                                else:
-                                    world.socialNet[self.agentId][aId]['social']+=stren
-                        except Exception, err:
-                                print 'Failed to create social link: {}, {}, {}'.format(self.agentId, aId, err)
+                        #Change existing - check for boundary
+                        if world.socialNet[self.agentId][otherAgentId]['social']+stren > world.socialLinkMaxStren:
+                            world.socialNet[self.agentId][otherAgentId]['social'] = world.socialLinkMaxStren
+                        elif world.socialNet[self.agentId][otherAgentId]['social']+stren < world.socialLinkMinStren:
+                            world.socialNet[self.agentId][otherAgentId]['social'] = world.socialLinkMinStren
+                        else:
+                            world.socialNet[self.agentId][otherAgentId]['social']+=stren
+                except Exception, err:
+                    print 'Failed to create social link: {}, {}, {}'.format(self.agentId, otherAgentId, err)
+            #Other clan
+            else:
+                try:
+                    #Degrade or create - by probability (higher chance of bad)
+                    #print 'Weaker: {}, {}'.format(self.agentId, aId)
+                    stren = np.random.choice(np.linspace(world.chatLinkMinStrength,
+                                                         world.chatLinkMaxStrength, 20),
+                                                        p=world.negativeProbsPow(20))
+                    #Check if it exists
+                    if not world.socialNet[self.agentId].has_key(otherAgentId):
+                        #Add the new link to the social net
+                        world.socialNet.add_edge(self.agentId, otherAgentId,
+                                                       {allLinks()[1]:stren})
+                    else:
+                        #Change existing - check for boundary
+                        if world.socialNet[self.agentId][otherAgentId]['social']+stren > world.socialLinkMaxStren:
+                            world.socialNet[self.agentId][otherAgentId]['social'] = world.socialLinkMaxStren
+                        elif world.socialNet[self.agentId][otherAgentId]['social']+stren < world.socialLinkMinStren:
+                            world.socialNet[self.agentId][otherAgentId]['social'] = world.socialLinkMinStren
+                        else:
+                            world.socialNet[self.agentId][otherAgentId]['social']+=stren
+                except Exception, err:
+                        print 'Failed to create social link: {}, {}, {}'.format(self.agentId, otherAgentId, err)
 
 
     def entropy(self):

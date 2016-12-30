@@ -129,7 +129,7 @@ clans = {}
 agents = {}
 deadAgents = {}
 #Max Population - initially
-maxPopn = 4
+maxPopn = 50
 #Mix of types [ex, fa, ha, tr] (percentages of total popn)
 agentTypeMix = [50.0, 0.0, 50.0, 0.0]
 #Agent Base visibility = AU

@@ -105,7 +105,9 @@ def saveUniverse():
                 'socialLinkAgeRate':world.socialLinkAgeRate,
                 'socialNet':world.socialNet,
                 'clanUIDs':world.clanUIDs,
-                'agentUIDs':world.agentUIDs
+                'agentUIDs':world.agentUIDs,
+                'ticks':world.ticks,
+                'deadAgents':world.deadAgents
                }
     #Time based FN if we want no overwrites in future
     timeFn = str(int(time()))
@@ -145,6 +147,8 @@ def loadUniverse():
     world.socialNet = worldData['socialNet']
     world.clanUIDs = worldData['clanUIDs']
     world.agentUIDs = worldData['agentUIDs']
+    world.ticks = worldData['ticks']
+    world.deadAgents = worldData['deadAgents']
     print 'Done Loading Universe'
 
 
@@ -180,9 +184,12 @@ def generateAgents():
     print 'Generating Agents...'
     #Mix of types [ex, fa, ha, tr] (percentages of total popn)
     #Single clan for now:
+    cnt = 0
     clanUID = world.clans.keys()[0]
     for idx, t in enumerate(world.agentTypeMix):
         for a in range(int((t/100.0)*world.maxPopn)):
+            print cnt
+            cnt+=1
             #Capacities & Rates
             caps = world.genHarvestorCaps()
             rates = world.genHarvestorRates()
