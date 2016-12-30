@@ -129,7 +129,7 @@ clans = {}
 agents = {}
 deadAgents = {}
 #Max Population - initially
-maxPopn = 3
+maxPopn = 4
 #Mix of types [ex, fa, ha, tr] (percentages of total popn)
 agentTypeMix = [50.0, 0.0, 50.0, 0.0]
 #Agent Base visibility = AU
@@ -143,8 +143,11 @@ socialLinkAgeRate = 0.01
 #Clan Link strength - base link strength between agent and clan (Clan links dont age)
 clanLinkStren = 0.1
 #Link creation strengths - base weight
-chatLinkMinStrength = -10.0
-chatLinkMaxStrength = 10.0
+chatLinkMinStrength = -5.0
+chatLinkMaxStrength = 5.0
+#Max min possible strengths
+socialLinkMinStren = -100.0
+socialLinkMaxStren = 100.0
 #BAse chance of a social link being created - 50/50
 baseSocialLinkCreationSplit = [True, False]
 

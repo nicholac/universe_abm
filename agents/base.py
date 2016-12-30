@@ -66,6 +66,14 @@ class baseAgent(object):
         world.socialNet.add_edges_from(links)
 
 
+    def addSocialLink(self, nodeId, _type, weight):
+        '''
+        Add a link to this agent, of type and weight
+        nodeId can be agentId, clanId
+        '''
+        world.socialNet.add_edge(self.agentId, nodeId, {_type:weight})
+
+
     def starJump(self, targetStarIdx):
         '''
         Jump an agent between star systems
@@ -238,6 +246,8 @@ class baseAgent(object):
         if np.random.choice(world.baseSocialLinkCreationSplit) == True:
             #Search the agents in the system to make this faster
             for aId in world.stars[self.currStarIdx].agentsInSys:
+                if aId == self.agentId:
+                    continue
                 if np.linalg.norm(self.position-world.agents[aId].position) < self.visibilityRange:
                     #Own Clan
                     if aId in world.clans[self.clanId].agents:
@@ -252,8 +262,13 @@ class baseAgent(object):
                                 #Add the new link to the social net
                                 world.socialNet.add_edge(self.agentId, aId, {'social':stren})
                             else:
-                                #Change existing
-                                world.socialNet[self.agentId][aId]['social']+=stren
+                                #Change existing - check for boundary
+                                if world.socialNet[self.agentId][aId]['social']+stren > world.socialLinkMaxStren:
+                                    world.socialNet[self.agentId][aId]['social'] = world.socialLinkMaxStren
+                                elif world.socialNet[self.agentId][aId]['social']+stren < world.socialLinkMinStren:
+                                    world.socialNet[self.agentId][aId]['social'] = world.socialLinkMinStren
+                                else:
+                                    world.socialNet[self.agentId][aId]['social']+=stren
                         except Exception, err:
                             print 'Failed to create social link: {}, {}, {}'.format(self.agentId, aId, err)
                     #Other clan
@@ -270,7 +285,13 @@ class baseAgent(object):
                                 world.socialNet.add_edge(self.agentId, aId,
                                                                {allLinks()[1]:stren})
                             else:
-                                world.socialNet[self.agentId][aId]['social']+=stren
+                                #Change existing - check for boundary
+                                if world.socialNet[self.agentId][aId]['social']+stren > world.socialLinkMaxStren:
+                                    world.socialNet[self.agentId][aId]['social'] = world.socialLinkMaxStren
+                                elif world.socialNet[self.agentId][aId]['social']+stren < world.socialLinkMinStren:
+                                    world.socialNet[self.agentId][aId]['social'] = world.socialLinkMinStren
+                                else:
+                                    world.socialNet[self.agentId][aId]['social']+=stren
                         except Exception, err:
                                 print 'Failed to create social link: {}, {}, {}'.format(self.agentId, aId, err)
 

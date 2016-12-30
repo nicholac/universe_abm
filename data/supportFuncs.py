@@ -76,7 +76,7 @@ def generateUniverse(save):
     if save == True:
         print 'Saving Universe...'
         #TODO: Solve the Q pickle problem
-        saveUniverse()
+        #saveUniverse()
     print 'Generate Universe Complete'
 
 
@@ -219,7 +219,7 @@ def generateAgents():
             #Add as node in world graph
             world.socialNet.add_node(agentUID, type='agent_{}'.format(allAgents()[idx]))
             #Initialise the agents social network link with clan here (its a new universe)
-            a.initSocialNet([[agentUID, clanUID, {'type':allLinks()[0]}]])
+            a.addSocialLink(clanUID, allLinks()[0], world.clanLinkStren)
             #Add to world lookup
             world.agents[agentUID] = a
             #Add to clan lookup
@@ -270,6 +270,11 @@ def socialNetEntropy():
         #Dont age clan, family etc
         if d.has_key('social'):
             d['social']-=world.socialLinkAgeRate
+            if d['social'] < world.socialLinkMinStren:
+                d['social'] = world.socialLinkMinStren
+            if d['social'] > world.socialLinkMaxStren:
+                d['social'] = world.socialLinkMaxStren
+
 
 
 def export2Graphviz():
@@ -280,8 +285,12 @@ def export2Graphviz():
     os.environ['PATH'] = os.environ['PATH']+':/usr/local/bin'
     G = pgv.AGraph()
     G.add_nodes_from(world.socialNet.nodes())
-    G.add_edges_from(world.socialNet.edges())
-    G.layout()
+    for e in world.socialNet.edges(data=True):
+        if e[2].has_key('social'):
+            G.add_edge(e[0], e[1], label=e[2]['social'])
+        elif e[2].has_key('clan'):
+            G.add_edge(e[0], e[1], label=e[2]['clan'])
+    G.layout(prog='dot')
     fn = "/Users/dusted-ipro/Documents/LiClipse Workspace/universe_abm/data/saves/{}{}".format(world.ticks, '_social_net.png')
     G.draw(fn)
 

@@ -14,21 +14,6 @@ import numpy as np
 #Globals
 import environment.world as world
 from data.supportFuncs import generateUniverse, loadUniverse, socialNetEntropy, export2Graphviz
-#Data
-from data.agentTypes import allAgents
-from data.celestialTypes import planets, stars
-from data.tradableTypes import allTradables
-#Agents
-from agents.explorer import explorer as a_explorer
-from agents.fabricator import fabricator as a_fabricator
-from agents.harvestor import harvestor as a_harvestor
-from agents.trader import trader as a_trader
-from celestials.base import basePlanet, baseStar
-from clans.base import baseClan
-#Debug
-import matplotlib.pyplot as plt
-import networkx as nx
-from networkx.drawing.nx_pydot import write_dot
 
 
 class abm(object):
@@ -90,7 +75,7 @@ class abm(object):
                 sleep(world.timeStep)
                 #Global Entropy
                 socialNetEntropy()
-                #Save social net every 100 steps
+                #Save social net every X steps
                 if cnt%100 == 0:
                     export2Graphviz()
         except KeyboardInterrupt:
