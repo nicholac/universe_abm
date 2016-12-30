@@ -13,7 +13,7 @@ from time import sleep
 import numpy as np
 #Globals
 import environment.world as world
-from data.supportFuncs import generateUniverse, loadUniverse
+from data.supportFuncs import generateUniverse, loadUniverse, socialNetEntropy, export2Graphviz
 #Data
 from data.agentTypes import allAgents
 from data.celestialTypes import planets, stars
@@ -25,6 +25,10 @@ from agents.harvestor import harvestor as a_harvestor
 from agents.trader import trader as a_trader
 from celestials.base import basePlanet, baseStar
 from clans.base import baseClan
+#Debug
+import matplotlib.pyplot as plt
+import networkx as nx
+from networkx.drawing.nx_pydot import write_dot
 
 
 class abm(object):
@@ -60,6 +64,7 @@ class abm(object):
             cnt = 0
             while True:
                 cnt+=1
+                world.ticks+=1
                 print 'Step {}'.format(cnt)
                 for k in world.agents.keys():
                     a = world.agents[k]
@@ -83,6 +88,11 @@ class abm(object):
                         print 'Clan Stores:{}'.format(world.clans[ck].store)
                     print '============'
                 sleep(world.timeStep)
+                #Global Entropy
+                socialNetEntropy()
+                #Save social net every 100 steps
+                if cnt%10 == 0:
+                    export2Graphviz()
         except KeyboardInterrupt:
             print '{}'.format('Run interrupt')
             return

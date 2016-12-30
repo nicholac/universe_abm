@@ -9,6 +9,7 @@ import numpy as np
 import pickle
 from time import time
 import os
+import pygraphviz as pgv
 
 from environment import world
 from celestials.base import basePlanet, baseStar
@@ -266,7 +267,21 @@ def socialNetEntropy():
         - When links are created they are even between agents (They both know each other equally well)
     '''
     for (u,v,d) in world.socialNet.edges(data='social'):
-        NEXT: work out degrading and avoiding duplication with undirected graphs
+        #Dont age clan, family etc
+        if d.has_key('social'):
+            d['social']-=world.socialLinkAgeRate
+
+
+def export2Graphviz():
+    '''
+    Export the current graph to graphviz (manually as the internal funcs dont work on mac atm)
+    '''
+    G = pgv.AGraph()
+    G.add_nodes_from(world.socialNet.nodes())
+    G.add_edges_from(world.socialNet.edges())
+    G.layout()
+    fn = "/Users/dusted-ipro/Documents/LiClipse Workspace/universe_abm/data/saves/{}".format(world.ticks, '_social_net.png')
+    G.draw(fn)
 
 
 

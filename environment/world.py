@@ -114,6 +114,7 @@ planetRadiusOpts = np.linspace(d, e)
 
 #Timestep - seconds
 timeStep = 0.1
+ticks = 0
 
 #Time elapsed since start
 runTime = 0.0
@@ -152,7 +153,7 @@ def positiveProbsLin(numSamps):
     '''
     Create a linear (y=x) distribution weighted toward higher numbers
     '''
-    return np.arange(10.0)/np.sum(np.arange(10.0))
+    return np.arange(numSamps)/np.sum(np.arange(numSamps))
 
 
 def negativeProbsLin(numSamps):
@@ -166,7 +167,7 @@ def positiveProbsPow(numSamps):
     '''
     Create a power (y=x^2) distribution weighted toward higher numbers
     '''
-    t = np.power(np.arange(10.0),2.0)
+    t = np.power(np.arange(numSamps),2.0)
     return t/np.sum(t)
 
 
@@ -181,7 +182,7 @@ def positiveProbsExp(numSamps):
     '''
     Create a exponential distribution weighted toward higher numbers
     '''
-    t = np.exp2(np.arange(10))
+    t = np.exp2(np.arange(numSamps))
     return t/np.sum(t)
 
 

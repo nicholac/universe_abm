@@ -250,7 +250,7 @@ class baseAgent(object):
                             #Check if it exists
                             if not world.socialNet[self.agentId].has_key(aId):
                                 #Add the new link to the social net
-                                world.socialNet.add_edges_from(self.agentId, aId, {'social':stren})
+                                world.socialNet.add_edge(self.agentId, aId, {'social':stren})
                             else:
                                 #Change existing
                                 world.socialNet[self.agentId][aId]['social']+=stren
@@ -267,7 +267,7 @@ class baseAgent(object):
                             #Check if it exists
                             if not world.socialNet[self.agentId].has_key(aId):
                                 #Add the new link to the social net
-                                world.socialNet.add_edges_from(self.agentId, aId,
+                                world.socialNet.add_edge(self.agentId, aId,
                                                                {allLinks()[1]:stren})
                             else:
                                 world.socialNet[self.agentId][aId]['social']+=stren
