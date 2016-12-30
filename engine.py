@@ -76,7 +76,7 @@ class abm(object):
                 #Global Entropy
                 socialNetEntropy()
                 #Save social net every X steps
-                if cnt%1000 == 0:
+                if world.ticks%1000 == 0:
                     export2Graphviz()
                     saveUniverse()
         except KeyboardInterrupt:
