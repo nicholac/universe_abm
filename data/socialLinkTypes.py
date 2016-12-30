@@ -10,6 +10,7 @@ Contains callable data structures for all social link types
 def allLinks():
     '''
     All Link Types (Agent <-> Agent, Agent<-->Clan, Clan<-->Clan)
+    CAUTION: Index Order is used for internal functions!
     ::returns Dict All types
     '''
     return {0:'clan', #In same clan

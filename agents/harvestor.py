@@ -124,7 +124,6 @@ class harvestor(baseAgent):
                 return
             #Harvest - check capacities
             if self.store[7]['store'] <= self.store[7]['capacity']:
-                print 'Collect:{}, {}'.format(self.energyHRate, world.stars[self.currStarIdx].planets[self.targetPlanet].store)
                 self.transmitTradable(world.stars[self.currStarIdx].planets[self.targetPlanet],
                                       self, 7, self.energyHRate)
                 #Consume - while harvesting

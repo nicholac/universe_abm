@@ -258,7 +258,15 @@ def delAgent(agentUID, reason):
                                   'dtg':datetime.now().isoformat()}
 
 
-
+def socialNetEntropy():
+    '''
+    Globally degrade the social network each tick
+    This is a first basic implementation and presumes:
+        - Agent links are non-directional (they both know each other equally well)
+        - When links are created they are even between agents (They both know each other equally well)
+    '''
+    for (u,v,d) in world.socialNet.edges(data='social'):
+        NEXT: work out degrading and avoiding duplication with undirected graphs
 
 
 

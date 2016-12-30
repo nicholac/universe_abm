@@ -8,6 +8,7 @@ import numpy as np
 import environment.world as world
 from environment.sensing import closestStar, dist
 from data.agentTypes import allAgents
+from data.socialLinkTypes import allLinks
 
 class baseAgent(object):
     '''
@@ -35,8 +36,11 @@ class baseAgent(object):
         self.addAgentSys(self.currStarIdx)
         self.origin = coords
         self.activity = 0
+        #Age in secs
         self.age = 0.0
-        #Age required for reproduction
+        #Age Rate (multiplier for faster aging per tick)
+        self.agentAgeRate = 1.0
+        #Age required for reproduction (secs)
         self.minAgeReprod = 100.0
         self.maxAgeReprod = 1000.0
         #Chance of reproduction
@@ -224,18 +228,67 @@ class baseAgent(object):
         If there are other agents in range:
             - of the same clan then form a link - or strengthen it
             - of a different clan then degrade the individuals link (and potentially the overall clans)
+        Caveats:
+            - When links are created they are even between agents (They both know each other equally well)
+            - Links are non-directed (single even link between agents)
+        TODO: Reengineer potentially to have agents knowing each other different amounts
+            - What knock on effects for service provision?
         '''
-        #Just search the agents in the system to make this faster
-        for aIdx in world.stars[self.currStarIdx].agentsInSys:
-            if np.linalg.norm(self.position-world.agents[aIdx].position) < self.visibilityRange:
-                #Own Clan
-                if aIdx in world.clans[self.clanId].agents:
-                    #Strengthen or create - by probability (higher chance of good)
-                    pass
-                #Other clan
-                else:
-                    #Degrade or create - by probability (higher chance of bad)
-                    pass
+        #Firstly some chance of even interacting
+        if np.random.choice(world.baseSocialLinkCreationSplit) == True:
+            #Search the agents in the system to make this faster
+            for aId in world.stars[self.currStarIdx].agentsInSys:
+                if np.linalg.norm(self.position-world.agents[aId].position) < self.visibilityRange:
+                    #Own Clan
+                    if aId in world.clans[self.clanId].agents:
+                        #Strengthen or create - by probability (higher chance of good)
+                        print 'Stronger: {}, {}'.format(self.agentId, aId)
+                        stren = np.random.choice(np.linspace(world.chatLinkMinStrength,
+                                                             world.chatLinkMaxStrength, 20),
+                                                            p=world.positiveProbsPow(20))
+                        try:
+                            #Check if it exists
+                            if not world.socialNet[self.agentId].has_key(aId):
+                                #Add the new link to the social net
+                                world.socialNet.add_edges_from(self.agentId, aId, {'social':stren})
+                            else:
+                                #Change existing
+                                world.socialNet[self.agentId][aId]['social']+=stren
+                        except Exception, err:
+                            print 'Failed to create social link: {}, {}, {}'.format(self.agentId, aId, err)
+                    #Other clan
+                    else:
+                        try:
+                            #Degrade or create - by probability (higher chance of bad)
+                            print 'Weaker: {}, {}'.format(self.agentId, aId)
+                            stren = np.random.choice(np.linspace(world.chatLinkMinStrength,
+                                                                 world.chatLinkMaxStrength, 20),
+                                                                p=world.negativeProbsPow(20))
+                            #Check if it exists
+                            if not world.socialNet[self.agentId].has_key(aId):
+                                #Add the new link to the social net
+                                world.socialNet.add_edges_from(self.agentId, aId,
+                                                               {allLinks()[1]:stren})
+                            else:
+                                world.socialNet[self.agentId][aId]['social']+=stren
+                        except Exception, err:
+                                print 'Failed to create social link: {}, {}, {}'.format(self.agentId, aId, err)
+
+
+    def entropy(self):
+        '''
+        Degrade toward disorder - per tick
+            - Social Net - done globally to avoid duplication
+            - Family Net - as above
+            - Resources?
+            - Age
+            - Chance of reprod
+        '''
+        self.age+=(world.timeStep*self.agentAgeRate)
+
+
+    def reprod(self):
+        pass
 
 
 
