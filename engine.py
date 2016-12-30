@@ -91,7 +91,7 @@ class abm(object):
                 #Global Entropy
                 socialNetEntropy()
                 #Save social net every 100 steps
-                if cnt%10 == 0:
+                if cnt%100 == 0:
                     export2Graphviz()
         except KeyboardInterrupt:
             print '{}'.format('Run interrupt')

@@ -276,11 +276,13 @@ def export2Graphviz():
     '''
     Export the current graph to graphviz (manually as the internal funcs dont work on mac atm)
     '''
+    import os
+    os.environ['PATH'] = os.environ['PATH']+':/usr/local/bin'
     G = pgv.AGraph()
     G.add_nodes_from(world.socialNet.nodes())
     G.add_edges_from(world.socialNet.edges())
     G.layout()
-    fn = "/Users/dusted-ipro/Documents/LiClipse Workspace/universe_abm/data/saves/{}".format(world.ticks, '_social_net.png')
+    fn = "/Users/dusted-ipro/Documents/LiClipse Workspace/universe_abm/data/saves/{}{}".format(world.ticks, '_social_net.png')
     G.draw(fn)
 
 
