@@ -49,6 +49,9 @@ class baseAgent(object):
         self.starJumpDist = 0.0000001
         #Resource Coord Store {starIdx:{planetIdx:{'rawMat':X, 'energy':Y}}, ...}
         self.resourceKnowledge = {}
+        #Service Types Offered by this agent
+        #{serviceType:self.function, ...}
+        self.serviceTypes = {}
         #Ticks the agent waits for services before deciding to do something itself
         self.serviceWait = 0
         self.maxServiceWait = 100

@@ -32,9 +32,6 @@ class harvestor(baseAgent):
         self.energyHRate = energyHRate
         self.rawMatHRate = rawMatHRate
         self.consumes = {0:{'consumeRate':hgConsumeRate}}
-        #Service Types Offered by this agent
-        #{serviceType:{}}
-        self.serviceTypes = {}
         #AU
         self.collectDist = 1.0
         #Tons per sec
