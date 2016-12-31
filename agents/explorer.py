@@ -9,7 +9,7 @@ from environment import world
 from environment.sensing import closestStar, dist
 from agents.base import baseAgent
 from data.tradableTypes import allTradables
-from data.contractTypes import allContracts
+from data.actionTypes import allActions
 
 
 class explorer(baseAgent):
@@ -35,35 +35,37 @@ class explorer(baseAgent):
         self.maxVelMag = world.genAgentMaxVelMag()
         self.consumes = {7:{'consumeRate':1.0}}
 
-        ###############
-        #Explorer Specifics
-        #What we are doing now - [moveStar, visitPlanets, checkResources, returnClan, depositKnowledge]
-        #In future we might be able to encode these as dict-embedded functions (then call them with an index?)
-        self.activityLookup = {0:'idle', 1:'moveStarSys', 2:'visitPlanets', 3:'checkResources',
-                             4:'returnClan', 5:'depositKnowledge', 6:'avoidingCriminal', 7:'avoidingMilitary'}
-        #Contract Types Offered by this agent
-        #{contractType:self.function, ...}
-        self.contractTypes = {}
+
+        #All Available to this agent
+        self.actionsAll = {0:{'func':self.idle, 'args':[], 'activity':0,
+                              'expiry':0.0, 'status':None,
+                              'blocking':False, 'default':False},
+                           1:{'func':self.exploreResources, 'args':[], 'activity':0,
+                              'expiry':0.0, 'status':None,
+                              'blocking':False, 'default':True},
+                           5:{'func':self.find, 'args':[], 'activity':0,
+                              'expiry':0.0, 'status':None,
+                              'blocking':False, 'default':False}
+                           }
+        #Actions offered as services to others
+        self.actionsOffered = [5]
+        #Current Action (id matches actionTypes lookup)
+        #Default on init
+        for k in self.actionsAll.keys():
+            if self.actionsAll[k]['default'] == True:
+                self.action = k
 
 
-    def actions(self):
+    def exploreResources(self, args):
         '''
-        Conduct the Agents Actions
+        Default Action
+        Offered Action - Explore the universe finding resources
+        args = []
         '''
-        #Criminal Avoidance
-        if self.detectCriminal():
-            #Swap to avoiding Criminal
-            self.activity = 6
-            return
-        #Military Avoidance
-        if self.detectMilitary():
-            #Swap to avoiding military
-            self.activity = 7
-            return
-        if self.activity == 1 or self.activity == 0:
+        if self.actionsAll[self.action]['activity'] == 1 or self.actionsAll[self.action]['activity'] == 0:
             #Are we in the target system?
             if self.currStarIdx == self.targetStar:
-                self.activity = 2
+                self.actionsAll[self.action]['activity'] = 2
                 self.targetPlanet = 0
                 self.destination = world.stars[self.currStarIdx].planets[0].position
                 return
@@ -73,10 +75,10 @@ class explorer(baseAgent):
                 #closestStarUk = world.clans[self.clanId].closestUnknownStar(self.position)
                 try:
                     nextStar = world.clans[self.clanId].explorerQ.popleft()
-                    self.activity = 1
+                    self.actionsAll[self.action]['activity'] = 1
                 except IndexError:
                     #Set Idle - Wait in system until clan put more jobs into the Q
-                    self.activity = 0
+                    self.actionsAll[self.action]['activity'] = 0
                     return
                 #Set Dest - its not in the system we are i so this is the jump out star
                 self.destination = world.starCoords[self.currStarIdx]
@@ -86,24 +88,24 @@ class explorer(baseAgent):
             if dist(self.position, self.destination) < self.starJumpDist:
                 #Jump & swap to visit planets
                 self.starJump(self.targetStar)
-                self.activity = 2
+                self.actionsAll[self.action]['activity'] = 2
                 self.targetPlanet = 0
                 self.destination = world.stars[self.currStarIdx].planets[0].position
             #Move closer to jump star
             else:
                 self.systemMove(self.maxVelMag)
-        elif self.activity == 2:
+        elif self.actionsAll[self.action]['activity'] == 2:
             #Are we close enough to scan?
             if dist(self.position, self.destination) < self.visibilityRange:
                 #Stop
                 self.stop()
-                self.activity = 3
+                self.actionsAll[self.action]['activity'] = 3
                 return
             else:
                 #Move closer to target planet
                 self.systemMove(self.maxVelMag)
                 return
-        elif self.activity == 3:
+        elif self.actionsAll[self.action]['activity'] == 3:
             #Store the resources of the closest planet
             self.storeResourceKnowledge(world.stars[self.currStarIdx].planets[self.targetPlanet].store,
                                         self.currStarIdx,
@@ -111,7 +113,7 @@ class explorer(baseAgent):
             #Have we done all planets?
             if len(self.resourceKnowledge[self.targetStar].keys()) == len(world.stars[self.currStarIdx].planets):
                 #Yes - swap to return home
-                self.activity = 4
+                self.actionsAll[self.action]['activity'] = 4
                 #Destination is initially local star (for jump)
                 self.destination = world.starCoords[self.currStarIdx]
                 self.targetPlanet = world.clans[self.clanId].originPlanetIdx
@@ -119,21 +121,21 @@ class explorer(baseAgent):
             else:
                 #No - Swap target planet
                 self.targetPlanet+=1
-                self.activity = 2
+                self.actionsAll[self.action]['activity'] = 2
                 self.destination = world.stars[self.currStarIdx].planets[self.targetPlanet].position
             return
-        elif self.activity == 4:
+        elif self.actionsAll[self.action]['activity'] == 4:
             #Are we in clan home system?
             if self.currStarIdx == self.targetStar:
                 #Are we close enough to clan home planet to dump knowledge?
                 if dist(self.position, self.destination) < self.visibilityRange:
                     #Push knowledge to clan
-                    self.activity = 5
+                    self.actionsAll[self.action]['activity'] = 5
                     world.clans[self.clanId].rxResourceKnowledge(self.resourceKnowledge)
                     #Clear own knowledge
                     self.resourceKnowledge = {}
                     #Swap to moveStar
-                    self.activity = 1
+                    self.actionsAll[self.action]['activity'] = 1
                     self.destination = None
                     self.targetPlanet = None
                     self.targetStar = None
@@ -153,13 +155,12 @@ class explorer(baseAgent):
                 #Move closer to star
                 self.systemMove(self.maxVelMag)
                 return
-        #Avoiding Crim
-        elif self.activity == 6:
-            pass
-        #Avoiding Mil
-        elif self.activity == 7:
-            pass
         return
+
+    def find(self):
+        '''
+        Offered Action - Find
+        '''
 
 
 

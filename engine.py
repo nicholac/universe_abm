@@ -14,6 +14,7 @@ import numpy as np
 #Globals
 import environment.world as world
 from data.supportFuncs import generateUniverse, loadUniverse, socialNetEntropy, export2Graphviz, saveUniverse
+from data.actionTypes import allActions
 
 
 class abm(object):
@@ -63,7 +64,7 @@ class abm(object):
                             print 'Dist:{}'.format(np.linalg.norm(a.destination-a.position))
                         except:
                             pass
-                        print 'Activity:{}'.format(a.activityLookup[a.activity])
+                        print 'Activity:{}'.format(allActions()[a.action]['activityLookup'][a.actionsAll[a.action]['activity']])
                         #Stores
                         try:
                             print 'Stores: {}'.format(a.store)
@@ -87,7 +88,7 @@ class abm(object):
 if __name__ == '__main__':
     print 'Hello ABM'
     #New Universe, debug
-    model = abm(True, False)
+    model = abm(True, True)
     model.run()
     del model
     print 'Goodbye ABM'

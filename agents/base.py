@@ -55,9 +55,21 @@ class baseAgent(object):
         #Ticks the agent waits for services before deciding to do something itself
         self.serviceWait = 0
         self.maxServiceWait = 100
-        #Agent offered contracts (stuff it needs doing) - these are duplicated in the world contracts
-        #{type:ServiceType, etc}
-        self.contracts = {}
+
+
+    def actions(self):
+        '''
+        Conduct the Agents Actions
+        '''
+        self.actionsAll[self.action]['func'](self.actionsAll[self.action]['args'])
+
+
+    def idle(self, args):
+        '''
+        Idle Actions
+        args = []
+        '''
+        pass
 
 
     def initSocialNet(self, links):

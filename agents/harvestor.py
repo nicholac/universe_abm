@@ -10,7 +10,7 @@ from environment import world
 from environment.sensing import dist
 from agents.base import baseAgent
 from data.tradableTypes import allTradables
-from data.contractTypes import allContracts
+from data.actionTypes import allActions
 
 
 class harvestor(baseAgent):
@@ -39,30 +39,31 @@ class harvestor(baseAgent):
         self.collectDist = 1.0
         #Tons per sec
         self.collectRate = 1.0
-        #Activities
-        self.activityLookup = {0:'idle', 1:'moveStarSys', 2:'harvesting', 3:'waitingService',
-                               4:'returnHome', 5:'avoidingCriminal', 6:'avoidingMilitary'}
-        #Contract Types Offered by this agent
-        #{contractType:self.function, ...}
-        self.contractTypes = {}
 
+        #All Available to this agent
+        self.actionsAll = {0:{'func':self.idle, 'args':[], 'activity':0,
+                              'expiry':0.0, 'status':None,
+                              'blocking':False, 'default':False},
+                           2:{'func':self.harvestResources, 'args':[], 'activity':0,
+                              'expiry':0.0, 'status':None,
+                              'blocking':False, 'default':True}
+                           }
+        #Actions offered as services to others
+        self.actionsOffered = [3]
+        #Current Action (id matches actionTypes lookup)
+        #Default on init
+        for k in self.actionsAll.keys():
+            if self.actionsAll[k]['default'] == True:
+                self.action = k
 
-    def actions(self):
+    def harvestResources(self, args):
         '''
-        Conduct the Agents Actions
+        Collect basic resources - Energy, Raw Materials
+        Default Action
+        args = []
         '''
-        #Criminal Avoidance
-        if self.detectCriminal():
-            #Swap to avoiding Criminal
-            self.activity = 5
-            return
-        #Military Avoidance
-        if self.detectMilitary():
-            #Swap to avoiding military
-            self.activity = 6
-            return
         #Move - catch for idle restart
-        if self.activity == 1 or self.activity == 0:
+        if self.actionsAll[self.action]['activity'] == 1 or self.actionsAll[self.action]['activity'] == 0:
             #Do we have a target?
             if self.destination == None:
                 try:
@@ -71,10 +72,10 @@ class harvestor(baseAgent):
                 except IndexError:
                     #Set Idle - Wait in system until clan put more jobs into the Q
                     self.stop()
-                    self.activity = 0
+                    self.actionsAll[self.action]['activity'] = 0
                     return
                 #Set Dest - its not in the system we are in so this is the jump out star
-                self.activity = 1
+                self.actionsAll[self.action]['activity'] = 1
                 self.destination = world.starCoords[self.currStarIdx]
                 self.targetPlanet = nextResource[1]
                 self.targetStar = nextResource[0]
@@ -86,7 +87,7 @@ class harvestor(baseAgent):
                     #Stop
                     self.stop()
                     #Swap harvest
-                    self.activity = 2
+                    self.actionsAll[self.action]['activity'] = 2
                     return
                 else:
                     #Move closer to target planet
@@ -103,11 +104,11 @@ class harvestor(baseAgent):
                 self.systemMove(self.maxVelMag)
                 return
         #Harvesting
-        elif self.activity == 2:
+        elif self.actionsAll[self.action]['activity'] == 2:
             #Does the planet have any resources left?
             if world.stars[self.currStarIdx].planets[self.targetPlanet].checkDepleted() == True:
                 #Set move home
-                self.activity = 4
+                self.actionsAll[self.action]['activity'] = 4
                 self.destination = world.starCoords[self.currStarIdx]
                 self.targetStar = None
                 self.targetPlanet = None
@@ -115,7 +116,7 @@ class harvestor(baseAgent):
             #Do we have the stuff required to do our job?
             if self.consumeCheck()[0] == False:
                 #Swap to waiting service and type
-                self.activity = 3
+                self.actionsAll[self.action]['activity'] = 3
                 #self.serviceTypeRequired = XXX
                 return
             #Harvest - check capacities
@@ -136,10 +137,10 @@ class harvestor(baseAgent):
                 #    - Communication about requirements (for tradable and service strength)
                 #    - Strength increase, decrease and queuing
                 #    - Services like pickup, dropoff, military assistance, medical help, etc...
-                self.activity = 3
+                self.actionsAll[self.action]['activity'] = 3
             return
         #Waiting Service
-        elif self.activity == 3:
+        elif self.actionsAll[self.action]['activity'] == 3:
             #Have we been serviced?
             if self.store[7]['store'] > 0.0:
                 #TODO: Reset demand
@@ -150,12 +151,12 @@ class harvestor(baseAgent):
             #Check again if we have everything needed to continue
             if self.consumeCheck()[0] == False:
                 #Swap back to harvesting
-                self.activity = 2
+                self.actionsAll[self.action]['activity'] = 2
                 return
             else:
                 #If we've waited long enough - then do something ourselves
                 if self.serviceWait > self.maxServiceWait:
-                    self.activity = 4
+                    self.actionsAll[self.action]['activity'] = 4
                     #Set Dest
                     if self.currStarIdx == world.clans[self.clanId].originStarIdx:
                         #Already home sys
@@ -171,7 +172,7 @@ class harvestor(baseAgent):
                 #NEXT: Figure out service demand and supply!
             return
         #Moving Home
-        elif self.activity == 4:
+        elif self.actionsAll[self.action]['activity'] == 4:
             #Are we in clan home system?
             if self.currStarIdx == self.targetStar:
                 #Are we close enough to clan home planet to stop and dump resources?
@@ -179,7 +180,7 @@ class harvestor(baseAgent):
                     #Push all Resources to clan main store
                     self.transmitAllTradables(self, world.clans[self.clanId])
                     #Swap to moveStarSys (new harvesting Job)
-                    self.activity = 0
+                    self.actionsAll[self.action]['activity'] = 0
                     self.destination = None
                     self.targetPlanet = None
                     self.targetStar = None
@@ -199,20 +200,6 @@ class harvestor(baseAgent):
                 #Move closer to star
                 self.systemMove(self.maxVelMag)
                 return
-        #Avoiding Criminal
-        elif self.activity == 5:
-            #Is criminal in range?
-                #Check criminal position
-                #Move away at max speed
-            #Swap to moving
-            pass
-        #Avoiding Military
-        elif self.activity == 6:
-            #Is military in range?
-                #Check military position
-                #Move away at max speed
-            #Swap to moving
-            pass
         else:
             return
 

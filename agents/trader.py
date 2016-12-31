@@ -8,7 +8,7 @@ import numpy as np
 from environment import world
 from agents.base import baseAgent
 from data.tradableTypes import allTradables
-from data.contractTypes import allContracts
+from data.actionTypes import allActions
 
 class trader(baseAgent):
     '''
@@ -36,11 +36,32 @@ class trader(baseAgent):
         self.consumes = {1:{'consumeRate':tgConsumeRate}}
         #Max Speed in System - LY / Sec
         self.maxVelMag = world.genAgentMaxVelMag()
-        ###############
-        #Transporter Specifics
-        #Contract Types Offered by this agent
-        #{contractType:self.function, ...}
-        self.contractTypes = {}
+
+
+        #All Available to this agent
+        self.actionsAll = {0:{'func':self.idle, 'args':[], 'activity':0,
+                              'expiry':0.0, 'status':None,
+                              'blocking':False, 'default':True},
+                           3:{'func':self.transport, 'args':[], 'activity':0,
+                              'expiry':0.0, 'status':None,
+                              'blocking':False, 'default':False}
+                           }
+        #Actions offered as services to others
+        self.actionsOffered = [3]
+        #Current Action (id matches actionTypes lookup)
+        #Default on init
+        for k in self.actionsAll.keys():
+            if self.actionsAll[k]['default'] == True:
+                self.action = k
+
+
+    def transport(self, args):
+        '''
+        Move stuff from X to Y
+        ::param args [fromCls, toCls]
+        '''
+        pass
+
 
 
 
