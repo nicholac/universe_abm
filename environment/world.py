@@ -8,6 +8,7 @@ Setup data about the world
 '''
 import numpy as np
 import networkx as nx
+import collections
 
 #Global Clan UID List - popped on creation, appended back to pool on death
 clanUIDs = range(0, 1000)
@@ -129,7 +130,7 @@ clans = {}
 agents = {}
 deadAgents = {}
 #Max Population - initially
-maxPopn = 50
+maxPopn = 6
 #Mix of types [ex, fa, ha, tr] (percentages of total popn)
 agentTypeMix = [50.0, 0.0, 50.0, 0.0]
 #Agent Base visibility = AU
@@ -150,6 +151,9 @@ socialLinkMinStren = -100.0
 socialLinkMaxStren = 100.0
 #BAse chance of a social link being created - 50/50
 baseSocialLinkCreationSplit = [True, False]
+
+#Global Contracts - must be global as can be from anything in social net
+contracts = collections.deque()
 
 
 def positiveProbsLin(numSamps):

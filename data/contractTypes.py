@@ -7,12 +7,12 @@ Contains callable data structures for all service types
 
 '''
 
-def allInteractions():
+def allContracts():
     '''
-    All Interaction Types (Agent <-> Agent)
+    All Contract Types (Agent <-> Agent)
     ::returns Dict All types
     '''
-    return {0:'Trade', #This can be any trading good that they both share
+    return {0:'Transport', #This can be any trading good
             1:'Defence',
             2:'Find'}
 

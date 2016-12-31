@@ -10,7 +10,7 @@ from environment import world
 from environment.sensing import dist
 from agents.base import baseAgent
 from data.tradableTypes import allTradables
-from data.interactionTypes import allInteractions
+from data.contractTypes import allContracts
 
 
 class harvestor(baseAgent):
@@ -28,22 +28,23 @@ class harvestor(baseAgent):
                       7:{'store':0.0, 'capacity':energyCap},
                       8:{'store':0.0, 'capacity':rawMatCap}}
 
-        #self.demands = {0:{'store':0.0, 'capacity':energyCap, 'strength':0.0}}
+        self.consumes = {0:{'consumeRate':hgConsumeRate}}
+        #Max Speed in System - LY / Sec
+        self.maxVelMag = world.genAgentMaxVelMag()
+        ###############
+        #Harvestor Specifics
         self.energyHRate = energyHRate
         self.rawMatHRate = rawMatHRate
-        self.consumes = {0:{'consumeRate':hgConsumeRate}}
-        #AU
+        #LY
         self.collectDist = 1.0
         #Tons per sec
         self.collectRate = 1.0
-        #Max Speed in System - LY / Sec
-        self.maxVelMag = world.genAgentMaxVelMag()
         #Activities
         self.activityLookup = {0:'idle', 1:'moveStarSys', 2:'harvesting', 3:'waitingService',
                                4:'returnHome', 5:'avoidingCriminal', 6:'avoidingMilitary'}
-        #Current targets
-        self.targetStar = None
-        self.targetPlanet = None
+        #Contract Types Offered by this agent
+        #{contractType:self.function, ...}
+        self.contractTypes = {}
 
 
     def actions(self):

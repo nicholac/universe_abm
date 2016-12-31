@@ -47,14 +47,17 @@ class baseAgent(object):
         self.reprodChance = world.agentReprodChance
         #Range we have to be from a star to jump
         self.starJumpDist = 0.0000001
+        #Current targets
+        self.targetStar = None
+        self.targetPlanet = None
         #Resource Coord Store {starIdx:{planetIdx:{'rawMat':X, 'energy':Y}}, ...}
         self.resourceKnowledge = {}
-        #Service Types Offered by this agent
-        #{serviceType:self.function, ...}
-        self.serviceTypes = {}
         #Ticks the agent waits for services before deciding to do something itself
         self.serviceWait = 0
         self.maxServiceWait = 100
+        #Agent offered contracts (stuff it needs doing) - these are duplicated in the world contracts
+        #{type:ServiceType, etc}
+        self.contracts = {}
 
 
     def initSocialNet(self, links):

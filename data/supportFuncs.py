@@ -107,7 +107,8 @@ def saveUniverse():
                 'clanUIDs':world.clanUIDs,
                 'agentUIDs':world.agentUIDs,
                 'ticks':world.ticks,
-                'deadAgents':world.deadAgents
+                'deadAgents':world.deadAgents,
+                'contracts':world.contracts
                }
     #Time based FN if we want no overwrites in future
     timeFn = str(int(time()))
@@ -149,6 +150,7 @@ def loadUniverse():
     world.agentUIDs = worldData['agentUIDs']
     world.ticks = worldData['ticks']
     world.deadAgents = worldData['deadAgents']
+    world.contracts = worldData['contracts']
     print 'Done Loading Universe'
 
 

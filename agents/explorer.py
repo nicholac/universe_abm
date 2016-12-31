@@ -9,6 +9,7 @@ from environment import world
 from environment.sensing import closestStar, dist
 from agents.base import baseAgent
 from data.tradableTypes import allTradables
+from data.contractTypes import allContracts
 
 
 class explorer(baseAgent):
@@ -27,21 +28,22 @@ class explorer(baseAgent):
         resourceType is either energy coords or raw mat coords - coords are tradable
         '''
         baseAgent.__init__(self, agentType, agentId, coords, clanId)
-        self.demands = {'id':6, 'strength':1.0, 'store':0.0, 'name':allTradables()[6]}
         #Explorer searches for an supplies coordinates of resourceType
         self.store = {resourceType:{'store':0.0, 'capacity':1000000.0},
                       7:{'store':0.0, 'capacity':1000000.0}}
-        #TODO: Energy consumption rate
-        self.consumes = {7:{'consumeRate':1.0}}
         #Max Speed in System - LY / Sec
         self.maxVelMag = world.genAgentMaxVelMag()
+        self.consumes = {7:{'consumeRate':1.0}}
+
+        ###############
+        #Explorer Specifics
         #What we are doing now - [moveStar, visitPlanets, checkResources, returnClan, depositKnowledge]
         #In future we might be able to encode these as dict-embedded functions (then call them with an index?)
         self.activityLookup = {0:'idle', 1:'moveStarSys', 2:'visitPlanets', 3:'checkResources',
                              4:'returnClan', 5:'depositKnowledge', 6:'avoidingCriminal', 7:'avoidingMilitary'}
-        #Current targets
-        self.targetStar = None
-        self.targetPlanet = None
+        #Contract Types Offered by this agent
+        #{contractType:self.function, ...}
+        self.contractTypes = {}
 
 
     def actions(self):

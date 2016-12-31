@@ -86,7 +86,8 @@ class abm(object):
 
 if __name__ == '__main__':
     print 'Hello ABM'
-    model = abm(False, False)
+    #New Universe, debug
+    model = abm(True, False)
     model.run()
     del model
     print 'Goodbye ABM'

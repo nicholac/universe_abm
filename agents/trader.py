@@ -3,29 +3,50 @@ Created on 24 Dec 2016
 
 @author: dusted-ipro
 '''
+import numpy as np
 
+from environment import world
 from agents.base import baseAgent
 from data.tradableTypes import allTradables
-import numpy as np
+from data.contractTypes import allContracts
 
 class trader(baseAgent):
     '''
     Trader / Transporter Agent
     '''
 
-    def __init__(self, agentType, agentId, coords, clan):
+    def __init__(self, agentType, agentId, coords, clan, tgConsumeRate):
         '''
         Constructor
         '''
         baseAgent.__init__(self, agentType, agentId, coords, clan)
-        self.demands = {'id':1, 'strength':1.0, 'store':0.0, 'name':allTradables()[1]}
-        #Doesnt supply - trades / transports
-        #self.supplies = {'id':None, 'strength':0.0, 'store':0.0}
-        self.consumes = [{'id':1, 'rate':1.0, 'store':0.0}]
-        self.energy = {'amount':0.0, 'usageRate':1.0}
-        #LY / Sec
-        self.maxSpeed = 3.0
-        self.maxCapacity = 10.0
-        #Changes on the fly
-        self.tradingGoodId = 0
-        self.tradingGoodName = allTradables()[self.tradingGoodId]
+        #Basically infinite stores for now
+        self.store = {0:{'store':0.0, 'capacity':100000.0},
+                      1:{'store':100.0, 'capacity':100000.0},
+                      2:{'store':0.0, 'capacity':100000.0},
+                      3:{'store':0.0, 'capacity':100000.0},
+                      4:{'store':0.0, 'capacity':100000.0},
+                      5:{'store':0.0, 'capacity':100000.0},
+                      6:{'store':0.0, 'capacity':100000.0},
+                      7:{'store':0.0, 'capacity':100000.0},
+                      8:{'store':0.0, 'capacity':100000.0},
+                      9:{'store':0.0, 'capacity':100000.0},
+                      10:{'store':0.0, 'capacity':100000.0}}
+
+        self.consumes = {1:{'consumeRate':tgConsumeRate}}
+        #Max Speed in System - LY / Sec
+        self.maxVelMag = world.genAgentMaxVelMag()
+        ###############
+        #Transporter Specifics
+        #Contract Types Offered by this agent
+        #{contractType:self.function, ...}
+        self.contractTypes = {}
+
+
+
+
+
+
+
+
+
