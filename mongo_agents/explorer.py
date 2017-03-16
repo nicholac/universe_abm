@@ -5,28 +5,138 @@ Created on 24 Dec 2016
 '''
 import numpy as np
 
+from mongo_agents import base as base_agent
+from environment.sensing import dist
 
-def get_starsys(agent_doc, sysAgentCoords, mongo_coll):
+
+def get_starsys(agent_doc, sys_agent_coords, mongo_coll):
     '''
     Get a star system to explore - next from clan
     '''
     clan_doc = mongo_coll.find({'_id':agent_doc['clanId']}).next()
+    subset = [i for i in clan_doc['starCatalogue'] if i['_id'] not in [j['starId'] for j in clan_doc['resourceKnowledge']]]
+    #Check if there are any unknown stars
+    if len(subset) == 0:
+        #Set Idle
+        agent_doc['actyData'] = {}
+        agent_doc['actyData']['actyId'] = 0
+        agent_doc['actyData']['actyIdx'] = 01
+        agent_doc['actyGroup'] = 0
+        agent_doc['destination'] = []
+        agent_doc['actyData']['complete'] = True
+        return
     #Get subset of unknown (star catalogue contains everything)
-    subset = [i for i in clan_doc['starCatalogue'] if i not in clan_doc['resourceKnowledge'].keys()]
-    #Key closest by Index
-    idx = np.argmin([np.linalg.norm(np.array(agent_doc['position'])-x) for x in subset])
+    closestStar = subset[np.argmin([np.linalg.norm(np.array(agent_doc['position'])-x['position']) for x in subset])]
     #Set as destination and add to resource knowledge - as blank so the other agents know its taken
     #This only works in-system!, because the doc remains local until system is processed
     #clan_doc['resourceKnowledge'][idx] = {}
     #Set destination as outbound star
-    agent_doc['destination'] = clan_doc['starCatalogue'][idx]
-    #Set activity to moving
-    agent_doc['acty'] = 1
+    agent_doc['destination'] = mongo_coll.find({'_id':clan_doc['starId']}).next()['position']
     #Set the ultimate target system - remember this is the index in the CLAN Star Catalogue coords list
-    agent_doc['actyData'] = {'tgtStarSys':idx, 'planetsVisited':[]}
+    agent_doc['actyData']['tgtSys'] = closestStar['_id']
+    agent_doc['actyData']['tgtStarCoords'] = closestStar['position']
+    #Actual planet target gets populated by next acty
+    agent_doc['actyData']['tgtCoords'] = []
     #Update the clan doc
-    mongo_coll.find_and_update({'_id':agent_doc['clanId']}, {'$set':{'resourceKnowledge.{}'.format(idx):{}}})
+    clan_doc['resourceKnowledge'].append({'starId':closestStar['_id'], 'planets':[]})
+    mongo_coll.find_and_modify({'_id':agent_doc['clanId']},
+                               {'$set':{'resourceKnowledge':clan_doc['resourceKnowledge']}})
+    #Set activity complete
+    agent_doc['actyData']['complete'] = True
 
+
+def deposit_knowledge(agent_doc, sys_agent_coords, mongo_coll):
+    '''
+    Deposit an explorers knowledge at the clan home planet
+    '''
+    #Remind ourselves which star system these planets came from
+    starId = mongo_coll.find({'_id':agent_doc['actyData']['planets'][0]['_id']},
+                             {'starId':1}).next()['starId']
+    clan_doc = mongo_coll.find({'_id':agent_doc['clanId']}).next()
+    [i for i in clan_doc['resourceKnowledge'] if i['starId'] == starId][0]['planets'] = agent_doc['actyData']['planets']
+    #TODO: This is working on a local copy of the clan doc which is dangerous if other stuff is editing it
+    #We are only updating the resource knowledge to make it a bit safer but needs checking
+    mongo_coll.find_one_and_update({'_id':agent_doc['clanId']},
+                                    {'$set':{'resourceKnowledge':clan_doc['resourceKnowledge']}})
+    print '% Discovered: {}'.format((len(clan_doc['resourceKnowledge'])/len(clan_doc['starCatalogue']))*100)
+    #Reset the agent acty data
+    agent_doc['actyData'].pop('planets')
+    agent_doc['actyData'].pop('tgtSys')
+    agent_doc['actyData'].pop('tgtStarCoords')
+    agent_doc['actyData'].pop('tgtCoords')
+    agent_doc['actyData'].pop('planetTgtId')
+    agent_doc['actyData']['complete'] = True
+
+
+
+def visit_planets(agent_doc, sys_agent_coords, mongo_coll):
+    '''
+    Visit all System planets in turn and scan each
+    '''
+    #Populate list of planets to visit if not already
+    try:
+        agent_doc['actyData']['planets']
+    except KeyError:
+        #No planets yet - Populate the list of planets in this system
+        planets = list(mongo_coll.find({'_type':'planet', 'starId':agent_doc['starId']},
+                                       {'_id':1}))
+        agent_doc['actyData']['planets'] = []
+        for i in planets:
+            agent_doc['actyData']['planets'].append({'_id':i['_id'],
+                                                     'visited':False,
+                                                      'energyStore':None,
+                                                      'rawMatStore':None})
+        #Set the first one as the the current target
+        agent_doc['actyData']['planetTgtId'] = agent_doc['actyData']['planets'][0]['_id']
+        agent_doc['destination'] = np.array(mongo_coll.find({'_id':agent_doc['actyData']['planets'][0]['_id']},
+                                                            {'position':1}).next()['position'])
+
+    #Do we have a current planet target?
+    if agent_doc['actyData']['planetTgtId'] != None:
+        #Are we in range to collect data?
+        if dist(agent_doc['destination'], agent_doc['position']) < agent_doc['vis']:
+            #Collect data
+            energy, rawMat = check_planet_resources(mongo_coll, agent_doc['actyData']['planetTgtId'])
+            planet = [i for i in agent_doc['actyData']['planets'] if i['_id'] == agent_doc['actyData']['planetTgtId']][0]
+            planet['energyStore'] = energy
+            planet['rawMatStore'] = rawMat
+            #Set visited
+            planet['visited'] = True
+            #Set target ID to None - gets picked up next time
+            agent_doc['actyData']['planetTgtId'] = None
+        else:
+            #Move closer
+            base_agent.system_move(agent_doc, sys_agent_coords, mongo_coll)
+    else:
+        try:
+            #Get the next planet to be visited
+            agent_doc['actyData']['planetTgtId'] = [i['_id'] for i in agent_doc['actyData']['planets'] if i['visited'] == False][0]
+            #Get planet Coords & set dest
+            agent_doc['destination'] = np.array(mongo_coll.find({'_id':agent_doc['actyData']['planetTgtId']},
+                                                                {'position':1}).next()['position'])
+        except IndexError:
+            #All visited - set clan as tgt system and final destination
+            clan_doc = mongo_coll.find({'_id':agent_doc['clanId']},
+                                        {'starId':1, 'position':1}).next()
+            agent_doc['actyData']['tgtSys'] = clan_doc['starId']
+            agent_doc['actyData']['tgtStarCoords'] = mongo_coll.find({'_id':agent_doc['actyData']['tgtSys']},
+                                                                     {'position':1}).next()['position']
+            #Set target within the target system
+            agent_doc['actyData']['tgtCoords'] = clan_doc['position']
+            #Set outbound star in this system as initial dest
+            base_agent.set_outbound_star(agent_doc, mongo_coll)
+            #Set acty complete
+            agent_doc['actyData']['complete'] = True
+
+
+
+def check_planet_resources(mongo_coll, planet_id):
+    '''
+    Check a planets Resources
+    '''
+    res = mongo_coll.find({'_id':planet_id},
+                               {'energyStore':1, 'rawMatStore':1}).next()
+    return res['energyStore'], res['rawMatStore']
 
 
 #=====================

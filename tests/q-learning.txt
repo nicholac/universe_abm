@@ -1,0 +1,110 @@
+So taking from these sources:
+http://outlace.com/Reinforcement-Learning-Part-3/
+https://medium.com/@harvitronix/using-reinforcement-learning-in-python-to-teach-a-virtual-car-to-avoid-obstacles-6e782cc7d4c6#.qqrkr62ty
+
+I'm going to try and implement a reinforcement learning algo for the agents.
+Stuff I think I understand:
+- The model gets trained using a feature vector of the current 'state' [position, proximity to x etc] and possible actions [move left, right , up down]
+The E-Greedy part is where we initially take random actions to learn by mistakes - this variable is epsilon.
+Epsilon gets decremented very slowly down to 0.1, so the chances of taking the random action over using the models predictions gradually drop.
+This chance of taking a risk is something that can be set - i.e. the lowest number for epsilon.
+
+Actions are taken based on the random choice or model Q results - pause and read...
+Q model outputs in the google deepmind atari examples above allow input of a state and output of the Q value relating to ALL possible actions given that input state.
+This means we dont have to run the model prediction for every possible action.
+
+So the model has:
+- Input layer of the length of our feaure vector
+- Hidden layers - pick the size that works
+- Output layer that is the size of the number of possible actions (up, down, left, right) = 4 units in case of abpve
+Example output for above: array([[-0.02812552, -0.04649779, -0.08819015, -0.00723661]])
+
+... loop:
+	So the input state is put into the model and a set of values for every action is output
+	- (at first run these vlues are meaningless because we havnt rewarded anything)
+
+	Now we have a Q vector from whoch we can pick the highest Q - the best move for the input state
+
+	So we take this highest Q action
+	Observe the NEW state
+	Collect our reward for the NEW state
+	Run the model / network forward AGAIN - using the new state
+
+	Here's where the minibatch training works - to avoid the catastrophic forgetting
+	we now store the original state, the action take, the new state and the reward in a tuple
+	Continue to append these (s, a, s+1, r+1) tuples to a list up to a defined size
+	When reaches RANDOMLY select a subset...
+
+	For each of the tuples calculate the VALUE of the move:
+	value = reward + (gamma * maxQ) - gamma is a parameter between 0 and 1
+	Gamma needs to be high if the model may need to take several moves to reach its goal (not so sure oin this bit)
+
+	Now calculate the value for the move we've just taken (in this epoch), and combine it with the random sample we've just created
+	This basically means we'll be training the model on the current move and a random sample of previous moves each time.
+
+	Careful here - if you look at the code he's:
+	- Getting Q values for the old state and new state
+	- Getting the highest Q values for the NEW state and using this to calculate the reward VALUE for this action
+	- He's then updating the original state Q value for this actions with this new VALUE
+	- So we end up with original state Q vals:[orig, orig, updated VALUE, orig]
+
+	So now we have a mini batch of:
+	[actions(0,0.6,0,0), actions(0,0.1,0,0), actions(0,0.8,0,0), actions(0,0.1,0,0)] - (These are 1-hot vectors showing the VALUE of the action taken)
+	- One of these will be the state we are working on in this epoch updated with the newly calculated value as described above
+	[state(0,1,0,1,0,0), state(0,1,0,0,1,0), state(0,1,0,0,0,0), state(0,1,0,0,1,1)] - (These are 1-hot vectors showing the state after action was taken)
+
+	Now train (fit) the model using this batch
+
+	Finally set the state to be the NEW state
+
+	Iterate to next MOVE until death / end-state
+
+	Restart the game (incrememnt Epoch, decrement epsilon etc)
+
+
+Run the model and watch the loss decrease (hopefully!)
+Develop a test routine that just uses the trained model to play the 'game' and watch if it completes successfully.
+
+So for the universe - questions are:
+- What is the game being played?
+-- Agent interaction for deciding every move?
+-- Agent interaction when they see each other?
+-- Agent interaction as part of the action sequencing?
+-- At the clan level? - make it a strategic thing that agents never see
+-- Maybe there is a low level agent one and high level clan one!
+
+- When does the game get played?
+-- When agents are close?
+-- When agents fight?
+-- When clans see each other?
+- What are the actions?
+-- Make generic agents that can do anything - then decide what to do for every step always based ont the model?
+-- Make a seperate set of actions they can do when seeing another agent - completely apart from their sequenced actions
+-- Are they agent specific? - Do I need a model per agent type then? - Yes
+-- What are the actions a clan could take? - type of agent to produce, strategies to follow etc
+- What is the state feature vector?
+-- proximity and type info (me & visible), current activity group, social network info, clan strategy info
+- Model training vs running?
+-- They train the model to work on any init state for player, but the example for different boards is gonna be harder
+-- With the abm the board will always be different?
+-- Try it out tho - just KEEP IT SIMPLE FOR A START!
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

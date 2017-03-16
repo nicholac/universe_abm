@@ -83,7 +83,7 @@ def genClanRates():
 
 
 #Total Stars
-numStars = 1000
+numStars = 10
 #Size of the universe (light-years)
 universeDims = np.array([100.0, 100.0, 100.0])
 #Average Solar system dimension - LY
@@ -130,15 +130,18 @@ clans = {}
 agents = {}
 deadAgents = {}
 #Max Population - initially
-maxPopn = 6
+maxPopn = 10000
 #Mix of types [ex, fa, ha, tr] (percentages of total popn)
 agentTypeMix = [50.0, 0.0, 50.0, 0.0]
 #Agent Base visibility = AU
 agentBaseVis = au2Ly(1.0)
 agentReprodChance = np.random.choice(np.linspace(0.1, 0.7))
 
-#Society Globals - Nodes are integers of agent or clan UID's - the actual classes can be accessed via the global dict
-socialNet = nx.Graph()
+#Society Globals - Nodes are integers of agent or clan UID's - the actual classes can be accessed via the global dict\
+#NOTE: Social Nets now stored per-agent (to allow distribution)
+#TODO: This allows a global view of all the social networks
+globalSocialNet = nx.Graph()
+
 #Rate at which social links age (link strength per tick)
 socialLinkAgeRate = 0.01
 #Clan Link strength - base link strength between agent and clan (Clan links dont age)
@@ -146,66 +149,14 @@ clanLinkStren = 0.1
 #Link creation strengths - base weight
 chatLinkMinStrength = -5.0
 chatLinkMaxStrength = 5.0
-#Max min possible strengths
-socialLinkMinStren = -100.0
-socialLinkMaxStren = 100.0
 #BAse chance of a social link being created - 50/50
 baseSocialLinkCreationSplit = [True, False]
 
-#Global Contracts - must be global as can be from anything in social net
+#Global Contracts - between any agent
+#{demanderUID:{'type':0, }}
 contracts = collections.deque()
 
 
-def positiveProbsLin(numSamps):
-    '''
-    Create a linear (y=x) distribution weighted toward higher numbers
-    '''
-    return np.arange(numSamps)/np.sum(np.arange(numSamps))
-
-
-def negativeProbsLin(numSamps):
-    '''
-    Create a linear (y=x) distribution weighted toward lower numbers
-    '''
-    return positiveProbsLin(numSamps)[::-1]
-
-
-def positiveProbsPow(numSamps):
-    '''
-    Create a power (y=x^2) distribution weighted toward higher numbers
-    '''
-    t = np.power(np.arange(numSamps),2.0)
-    return t/np.sum(t)
-
-
-def negativeProbsPow(numSamps):
-    '''
-    Create a linear (y=x^2) distribution weighted toward lower numbers
-    '''
-    return positiveProbsPow(numSamps)[::-1]
-
-
-def positiveProbsExp(numSamps):
-    '''
-    Create a exponential distribution weighted toward higher numbers
-    '''
-    t = np.exp2(np.arange(numSamps))
-    return t/np.sum(t)
-
-
-def negativeProbsExp(numSamps):
-    '''
-    Create a exponential distribution weighted toward lower numbers
-    '''
-    return positiveProbsExp(numSamps)[::-1]
-
-def entropy():
-    '''
-    Global degrade function to be fired per tick
-        - Resource Degrade
-        - Universe expansion
-    '''
-    pass
 
 
 

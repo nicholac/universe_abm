@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Universe ABM Story Board</title>
+
+    <!-- Make me responsive! -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="/static/bootstrap3/css/bootstrap.css" rel="stylesheet">
+    <link href="/static/css/leaflet.css" rel="stylesheet">
+    <!--link href="/static/bootstrap3/css/bootstrap-responsive.css" rel="stylesheet">-->
+
+    <!-- CSS -->
+    <link rel="stylesheet" href="../static/bootstrap3/css/bootstrap.min.css">
+    <link rel="stylesheet" href="../static/css/c3.min.css">
+    <link rel="stylesheet" href="../static/css/c3.css">
+
+    <!-- JAVASCRIPT LIBS -->
+    <script type="text/javascript" src="../static/js/jquery-1.11.1.min.js"></script>
+    <script type="text/javascript" src="../static/bootstrap3/js/bootstrap.min.js"></script>
+    <script type="text/javascript" src="../static/js/leaflet.js"></script>
+    <script type="text/javascript" src="../static/js/d3.min.js"></script>
+    <script type="text/javascript" src="../static/js/d3.js"></script>
+    <script type="text/javascript" src="../static/js/c3.js"></script>
+    <script type="text/javascript" src="../static/js/c3.min.js"></script>
+    <style>
+
+<style>
+
+    .node {
+	  border: solid 1px white;
+	  font: 10px sans-serif;
+	  line-height: 12px;
+	  overflow: hidden;
+	  position: absolute;
+	  text-indent: 2px;
+	}
+	.svg {
+	  position: absolute;
+	}
+	.table td {
+	   text-align: center;
+	}
+</style>
+<body>
+
+
+<div class="container">
+    <div class="row"> <!-- Outer Row map -->
+        <div class="col-lg-3"> <!-- Tot pop col -->
+			<div class="panel panel-default">
+		        <div class="panel-heading" id="graphpanel5"><i class="icon-ok">Population Stats</i>
+		            </div>
+		            <div class="panel-body">
+		            	<div class="chart" id="chart5">
+		            		<script>
+		            		function worker() {
+								$.ajax({
+						            url: "/popn_type",
+						            dataType: "json"
+							        }).done(function(data) {
+							            //Build the graph as a callback
+							            var chart1 = c3.generate({
+										    data: {
+										        columns:
+										            data['cols'],
+										    	type: 'pie'
+										    },
+										    transition: {
+												        duration: 0
+												    },
+										    bindto: '#chart5'
+										});
+									})
+									.fail(function() {console.log("Get data error"); })
+					        		.always(function() { });
+				        		}
+				        		setInterval(worker, 5000);
+		            		</script>
+		            	</div> <!-- chart -->
+	            </div> <!-- Panel Body -->
+	        </div> <!-- Panel Default -->
+		</div> <!-- Total Pop Col -->
+		<div class="col-lg-3"> <!-- Alive col -->
+			<div class="panel panel-default">
+		        <div class="panel-heading" id="graphpanel6"><i class="icon-ok">Prepared for Fitcheck Stats</i>
+		            </div>
+		            <div class="panel-body">
+		            	<div class="chart" id="chart6">
+		            		<script>
+		            		function worker() {
+								$.ajax({
+						            url: "/popn_fitness",
+						            dataType: "json"
+							        }).done(function(data) {
+							            //Build the graph as a callback
+							            var chart1 = c3.generate({
+										    data: {
+										        columns:
+										            data['cols'],
+										    	type: 'pie'
+										    },
+										    transition: {
+												        duration: 0
+												    },
+										    bindto: '#chart6'
+										});
+									})
+									.fail(function() {console.log("Get data error"); })
+					        		.always(function() { });
+					        	}
+					        	setInterval(worker, 5000);
+		            		</script>
+		            	</div> <!-- chart -->
+	            </div> <!-- Panel Body -->
+	        </div> <!-- Panel Default -->
+		</div> <!-- Alive Col -->
+		<div class="col-lg-3"> <!-- Fit col -->
+			<div class="panel panel-default">
+		        <div class="panel-heading" id="graphpanel7"><i class="icon-ok">Parent Stats</i>
+		            </div>
+		            <div class="panel-body">
+		            	<div class="chart" id="chart7">
+		            		<script>
+		            		function worker() {
+								$.ajax({
+						            url: "/popn_parent",
+						            dataType: "json"
+							        }).done(function(data) {
+							            //Build the graph as a callback
+							            var chart1 = c3.generate({
+										    data: {
+										        columns:
+										            data['cols'],
+										    	type: 'pie'
+										    },
+										    transition: {
+												        duration: 0
+												    },
+										    bindto: '#chart7'
+										});
+									})
+									.fail(function() {console.log("Get data error"); })
+					        		.always(function() { });
+					        	}
+								setInterval(worker, 5000);
+		            		</script>
+		            	</div> <!-- chart -->
+	            </div> <!-- Panel Body -->
+	        </div> <!-- Panel Default -->
+		</div> <!-- Fit Col -->
+		<div class="col-lg-3"> <!-- Ages col -->
+			<div class="panel panel-default">
+		        <div class="panel-heading" id="graphpanel8"><i class="icon-ok">Age Stats</i>
+		            </div>
+		            <div class="panel-body">
+		            	<div class="chart" id="chart8">
+		            		<script>
+		            		function worker() {
+								$.ajax({
+						            url: "/popn_ages",
+						            dataType: "json"
+							        }).done(function(data) {
+							            //Build the graph as a callback
+							            var chart1 = c3.generate({
+										    data: {
+										        columns:
+										            data['cols'],
+										    	type: 'pie'
+										    },
+										    transition: {
+												        duration: 0
+												    },
+										    bindto: '#chart8'
+										});
+									})
+									.fail(function() {console.log("Get data error"); })
+					        		.always(function() { });
+					        	}
+					        	function globalData(){
+									//Get all the drone data for table
+									//Remove all rows
+
+									$.ajax({
+							            url: "/global_stats",
+							            dataType: "json"
+							        }).done(function(data) {
+							            var row = "<tr><td>"+data['totalPop']+"</td><td>"+data['epoch']+"</td><td>"+data['resKnowledge']+"</td><td>"+data['procTimePerEpoch']+"</td></tr>";
+										$('#globalStatsTable').find('tr').each(function (rowIndex, r) {
+											if (rowIndex != 0){
+												r.innerHTML = row;
+											}
+										});
+										//$('#globalStatsTable').append(row);
+									})
+							        .fail(function() {console.log("Get data error"); })
+							        .always(function() { });
+								}
+								setInterval(globalData, 5000);
+								setInterval(worker, 5000);
+		            		</script>
+		            	</div> <!-- chart -->
+	            </div> <!-- Panel Body -->
+	        </div> <!-- Panel Default -->
+		</div> <!-- Ages Col -->
+        </div> <!-- Map & GDELT chart row -->
+    <div class="Row"> <!-- Table & GDELT Row -->
+    	<div class="col-lg-6"> <!-- Table col -->
+		    <div class="table-responsive">
+		        <table class="table table-bordered" id="globalStatsTable">
+		            <thead>
+		                <tr>
+		                    <th>Total Pop</th>
+		                    <th>Epoch</th>
+		                    <th>Resource Knowledge</th>
+		                    <th>Proc Time per Epoch</th>
+		                </tr>
+		                <tr>
+		                    <td></td>
+		                    <td></td>
+		                    <td></td>
+		                    <td></td>
+		                </tr>
+		            </thead>
+		            <tbody>
+		            </tbody>
+		        </table>
+		    </div> <!-- Table Div -->
+		</div> <!-- Table Col -->
+    </div> <!-- Table Row -->
+    </div>
+    <div class="Row"> <!-- Bar Chart Row -->
+    	<div class="col-lg-6"> <!-- Bar Chart col -->
+			<div class="panel panel-default">
+		        <div class="panel-heading" id="graphpanel10"><i class="icon-ok">% Generation with Fit Traits</i></div>
+		            <div class="panel-body">
+	            		<div class="chart" id="chart10">
+	            		</div>
+	            		<script>
+		            		function getGenerationFit(){
+								//Generation Fit Chart
+								$.ajax({
+						            url: "/generation_fitness",
+						            dataType: "json"
+						        }).done(function(data) {
+						            //Build the graph as a callback
+						            var chart = c3.generate({
+									    data: {
+									    	x:'x',
+									        columns:data['cols'],
+									        type: 'line'
+									    },
+									    transition: {
+												        duration: 0
+												    },
+									    axis:{
+									        rotated: false,
+									            x:{
+									                type: "category"
+									            }
+									    },
+									    bindto: '#chart10'
+									});
+									var chart2 = c3.generate({
+									    data: {
+									    	x:'x',
+									        columns:data['bars'],
+									        type: 'bar'
+									    },
+									    transition: {
+												        duration: 0
+												    },
+									    axis:{
+									        rotated: false,
+									            x:{
+									                type: "category"
+									            }
+									    },
+									    bindto: '#chart11'
+									});
+									})
+							        .fail(function() {console.log("Get data error"); })
+							        .always(function() { });
+							}
+							setInterval(getGenerationFit, 20000);
+	            		</script>
+	            	</div>
+	         </div>
+		</div> <!-- Bar Chart Col -->
+		<div class="col-lg-6"> <!-- Bar Chart col -->
+			<div class="panel panel-default">
+		        <div class="panel-heading" id="graphpanel11"><i class="icon-ok">Popn Makeup</i></div>
+		            <div class="panel-body">
+	            		<div class="chart" id="chart11">
+	            		</div>
+	            	</div>
+	         </div>
+		</div> <!-- Bar Chart Col -->
+    </div> <!-- Bar Chart Row -->
+</body>
+</html>
+
+
+
+

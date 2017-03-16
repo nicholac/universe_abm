@@ -1,0 +1,412 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>OS Brief Story Board</title>
+
+    <!-- Make me responsive! -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="/static/bootstrap3/css/bootstrap.css" rel="stylesheet">
+    <link href="/static/css/leaflet.css" rel="stylesheet">
+    <!--link href="/static/bootstrap3/css/bootstrap-responsive.css" rel="stylesheet">-->
+
+    <!-- CSS -->
+    <link rel="stylesheet" href="../static/bootstrap3/css/bootstrap.min.css">
+    <link rel="stylesheet" href="../static/css/c3.min.css">
+    <link rel="stylesheet" href="../static/css/c3.css">
+
+    <!-- JAVASCRIPT LIBS -->
+    <script type="text/javascript" src="../static/js/jquery-1.11.1.min.js"></script>
+    <script type="text/javascript" src="../static/bootstrap3/js/bootstrap.min.js"></script>
+    <script type="text/javascript" src="../static/js/leaflet.js"></script>
+    <script type="text/javascript" src="../static/js/d3.min.js"></script>
+    <script type="text/javascript" src="../static/js/d3.js"></script>
+    <script type="text/javascript" src="../static/js/c3.js"></script>
+    <script type="text/javascript" src="../static/js/c3.min.js"></script>
+    <script type="text/javascript" src="../static/js/d3PopupGraph.js"></script>
+    <style>
+
+<style>
+
+    #map-container {
+	    width: 100%;
+	    height: 100%;
+	    position: absolute;
+	    top: 0;
+	    left: 0;
+
+	    transition: height 0.5s ease-in-out;
+	}
+    .node {
+	  border: solid 1px white;
+	  font: 10px sans-serif;
+	  line-height: 12px;
+	  overflow: hidden;
+	  position: absolute;
+	  text-indent: 2px;
+	}
+	.svg {
+	  position: absolute;
+	}
+	.table td {
+	   text-align: center;
+	}
+</style>
+<body>
+
+
+<div class="container">
+    <nav class="navbar navbar-default" role="navigation">
+        <div class="container-fluid">
+            <div class="navbar-header">
+                <a class="navbar-brand" href="#">Home</a>
+            </div>
+        </div>
+    </nav>
+    <div class="row"> <!-- Outer Row map -->
+        <div class="col-lg-6">
+            <div class="panel panel-default">
+                <div class="panel-heading" id="mappanel"><i class="icon-ok">Kenya Map (Leaflet, OpenStreetMap, WRI)</i>
+                </div>
+                <div class="panel-body">
+                   <div id="map" style="width: 500px; height: 400px"></div>
+                    <script>
+                    	setTimeout(function(){ map.invalidateSize()}, 400);
+                        //Get the panel width
+                        var w = $('#mappanel').css('width');
+                        var pad = $('#mappanel').css('panel-body');
+                        var newW = parseInt(w, 10) - 30;
+                        var newW = newW + "px";
+                        $('#map').css('width', newW);
+                        var map = L.map('map').setView([0.55, 37.0], 6);
+                        L.tileLayer('http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                            maxZoom: 18,
+                            attribution: 'Map data &copy; <a href="http://openstreetmap.org">OpenStreetMap</a> contributors, ' +
+                                '<a href="http://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>, ' +
+                                'Imagery © <a href="http://mapbox.com">Mapbox</a>',
+                            id: 'examples.map-i875mjb7'
+                        }).addTo(map);
+                        //Make feature group
+                        var featGroup = L.featureGroup([]).addTo(map);
+                        //Stash it in the DOM
+                        var fGroupArr = new Array();
+                        fGroupArr["hashGp"] = featGroup;
+                        $("body").data(fGroupArr, 0);
+
+                        //Elephants
+                        //Make feature group
+                        var featGroup2 = L.featureGroup([]).addTo(map);
+                        //Stash it in the DOM
+                        var fGroupArr2 = new Array();
+                        fGroupArr2["elegp"] = featGroup2;
+                        $("body").data(fGroupArr2, 0);
+
+                        //Map Click action
+                        map.on('click', onMapClick);
+                        //Load Elephant Preds
+
+
+                        function onMapClick(e){
+					    	//For handling a map click
+					    	//alert(e.latlng);
+					    	//Now make it a geohash and ajax the resulting sim cells
+					    };
+
+                    </script>
+                </div>
+              </div>
+            </div> <!-- Map Col -->
+            <div class="col-lg-6"> <!-- Gdelt col -->
+			<div class="panel panel-default">
+		        <div class="panel-heading" id="graphpanel5"><i class="icon-ok">News Events (GDELT)</i>
+		            </div>
+		            <div class="panel-body">
+			            <div class="form-group">
+						  <input type="text" class="form-control" id="searchStr" onkeydown="getSuggest(this.value)">
+						  <button type="button" class="btn btn-default">Search</button>
+						</div>
+						<div class="table-responsive">
+					        <table class="table table-bordered" id="resultsTable">
+					            <thead>
+					                <tr>
+					                    <th>Output Data</th>
+					                    <th>Score</th>
+					                </tr>
+					            </thead>
+					            <tbody>
+					            </tbody>
+					        </table>
+		            	</div> <!-- chart -->
+	            </div> <!-- Panel Body -->
+	        </div> <!-- Panel Default -->
+		</div> <!-- GDELT Col -->
+        </div> <!-- Map & GDELT chart row -->
+
+
+    <script>
+    function getSuggest (val) {
+		$.ajax({
+            url: "/query?q="+val,
+            dataType: "json"
+        }).done(function(data) {
+            //Build the graph as a callback
+            out = '<thead>'
+		    out+='<tr>'
+		    out+='<th>Output Data2</th>'
+		    out+='<th>Score</th>'
+		    out+='</tr>'
+		    out+='</thead>'
+		    out+='<tbody>'
+		    res = data.results.features;
+		    for (var i in res){
+		        out+='<tr><td>'+data.results.features[i].properties.dtg+'</td><td>'+data.results.features[i].properties.dtg+'</td></tr>'
+		    }
+		    out+='</tbody>'
+            $('#resultsTable').html(out);
+            console.log(data);
+            //Add to map
+            var countryStyle = {
+			    "color": "#ff7800",
+			    "weight": 2,
+			    "opacity": 0.0
+			};
+            //Get DOM Data stash
+	        var fGroupArr = $("body").data();
+	        var fg = fGroupArr["hashGp"];
+	        //Clear the map using it
+	        map.removeLayer(fg);
+	        var gjLayer = L.geoJson(data.results);
+	        //Make Feature Group
+			var featGroup = L.featureGroup([gjLayer]).addTo(map);
+			//Fit to the added data
+			map.fitBounds(featGroup.getBounds());
+			//Stash the array
+			fGroupArr["hashGp"] = featGroup;
+	        $("body").data(fGroupArr, 0);
+      }).fail(function() {console.log("Get data error"); })
+      .always(function() { });
+	};
+    function onEachFeature (feature, layer) {
+    	//Bind some popup content when feature clicked
+	    //layer.bindPopup(feature.properties.hash);
+		//Create a new Div in the popup
+	    var div_popup = L.DomUtil.create('div', 'd3Popup');
+	    div_popup.innerHTML = "<a>BD Gram</a>";
+
+    	var popup = L.popup()
+		    .setContent(div_popup)
+
+	    layer.on('click', function (e) {
+
+			//Make a new DIV in the popup
+			//var newdiv1 = $( "<div class='d3g' id='d3Pop'/><a>append</a>" )
+	    	//$( div_popup ).append( newdiv1 );
+
+			//Open where clicked
+			popup.setLatLng(e.latlng);
+			popup.openOn(map);
+
+		    //Load in the d3 Graph
+		    //d3.select(d3Elem).append("svg").attr("width", 50).attr("height", 50).append("circle").attr("cx", 25).attr("cy", 25).attr("r", 25).style("fill", "purple");
+		    bdGram(layer, div_popup);
+		    popup.update();
+
+        });
+    };
+
+	function countyFocus(countyGeoJson){
+		var countryStyle = {
+		    "color": "#ff7800",
+		    "weight": 2,
+		    "opacity": 0.0
+		};
+		//Get DOM Data stash
+        var fGroupArr = $("body").data();
+        var fg = fGroupArr["hashGp"];
+        //Clear the map using it
+        map.removeLayer(fg);
+        var gjLayer = L.geoJson(countyGeoJson, {style:countryStyle});
+        //Make Feature Group
+		var featGroup = L.featureGroup([gjLayer]).addTo(map);
+		//Fit to the added data
+		map.fitBounds(featGroup.getBounds());
+		//Stash the array
+		fGroupArr["hashGp"] = featGroup;
+        $("body").data(fGroupArr, 0);
+
+	}
+
+	function loadElephants(data){
+		console.log(data);
+		//Load elephants aswell
+        var geojsonMarkerOptions = {
+		    radius: 4,
+		    fillColor: "#2C27E1",
+		    color: "#000",
+		    weight: 1,
+		    opacity: 1,
+		    fillOpacity: 0.3
+		};
+
+    	L.geoJson(data, {
+		    pointToLayer: function (feature, latlng) {
+		        return L.circleMarker(latlng, geojsonMarkerOptions);
+		    }
+		}).addTo(map);
+
+	}
+
+    function getHash() {
+    	var b = map.getBounds().toBBoxString();
+    	//Get the values
+        var mid = $( "#mid" ).val();
+        var ghash = $( "#ghash" ).val();
+        //Get DOM Data stash
+        var fGroupArr = $("body").data();
+        var fg = fGroupArr["hashGp"];
+        //Clear the map using it
+        map.removeLayer(fg);
+
+        //Ajax for getting geojson
+        $.ajax({
+            url: "/rnddata?id="+mid+"&ghash="+ghash,
+            dataType: "json"
+        }).done(function(data) {
+            //Build the graph as a callback
+            console.log(data["success"]);
+            var feats = data["features"]
+            console.log(feats[0]["properties"]);
+            //console.log(feats);
+            //Define some colours based on strength
+            var gjLayer = L.geoJson(feats, {
+            	onEachFeature: onEachFeature,
+			    style: function(feature) {
+			    	if (feature.properties.seed == true){
+			    		//Colour it black
+			    		return {color: "#000000"};
+			    	}
+			    	else if (feature.properties.strength > 0.5){
+			    		return {color: "#CC0099"};
+			    	}
+			    	else{
+			        switch (feature.properties.strength) {
+			            case 0.0: return {color: "#FFEBE6"};
+			            case 0.1: return {color: "#FFAD99"};
+			            case 0.2: return {color: "#FF8566"};
+			            case 0.3: return {color: "#FF5C33"};
+			            case 0.4: return {color: "#B8B800"};
+			            case 0.5: return {color: "#FFFF00"};
+			            case 0.6: return {color: "#C2FF85"};
+			            case 0.7: return {color: "#A3FF47"};
+			            case 0.8: return {color: "#4DB84D"};
+			            case 0.9: return {color: "#009900"};
+			            case 1.0: return {color: "#0033CC"};
+			            default: return {color: "#0033CC"};
+			        	}
+			      	}
+			    }
+				});
+			//Make Feature Group
+			var featGroup = L.featureGroup([gjLayer]).addTo(map);
+			//Fit to the added data
+			map.fitBounds(featGroup.getBounds());
+			//Stash the array
+			fGroupArr["hashGp"] = featGroup;
+            $("body").data(fGroupArr, 0);
+            })
+      .fail(function() {console.log("Get data error"); })
+      .always(function() { });
+    }
+
+	function getPrecip(name){
+
+		$('#graphpanel3').text(name+' Precipitation Stats (World Bank, WRI, NOAA)');
+		$('#mappanel').text(name+' Map (Leaflet, OpenStreetMap, WRI)');
+		//Wind Speed Chart
+		var chart1 = c3.generate({
+		    data: {
+		    	x:'x',
+		        columns:[
+		            ['x', 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
+					['Speed (m/s)', 14.1,16.0,17.9,18.4,19.0,19.1,20.9,21.0,22.1,22.3,18.0,13.7]
+				],
+		        type: 'line'
+		    },
+		    axis:{
+		        rotated: false,
+		            x:{
+		                type: "category"
+		            }
+		    },
+		    grid: {
+		        y: {
+		            lines: [
+		                {value: 20.0, text: 'DJI Phantom'},
+		                {value: 15.0, text: 'DJI Mavic'}
+		            ]
+		        }
+		    },
+		    bindto: '#chart4'
+		});
+		$.ajax({
+            url: "/county_precip?name="+name,
+            dataType: "json"
+        }).done(function(data) {
+            //Build the graph as a callback
+            var chart = c3.generate({
+			    data: {
+			    	x:'x',
+			        columns:[
+			        	data["keys"],
+			            data["historic"],
+			            data["forecast"]
+			        ],
+			        type: 'line'
+			    },
+			    axis:{
+			        rotated: false,
+			            x:{
+			                type: "category"
+			            }
+			    },
+			    bindto: '#chart3'
+			});
+			})
+	        .fail(function() {console.log("Get data error"); })
+	        .always(function() { });
+	}
+
+	function droneData(name){
+		//Get all the drone data for table
+		//Remove all rows
+		$('#droneStatsTable').find('tr').each(function (rowIndex, r) {
+			if (rowIndex != 0){
+				r.remove();
+			}
+		});
+		//Grab Top 3 Value by Area
+		var cnts = ["Tharaka", "Busia", "Bungoma"];
+		var length = cnts.length;
+		for (var i=0; i<length; i++){
+			console.log(cnts[i]);
+			$.ajax({
+	            url: "/county_dronedata?name="+cnts[i],
+	            dataType: "json"
+	        }).done(function(data) {
+	        	//name, % crops, %suitable, power
+	            var row = "<tr><td>"+data['county']+"</td><td>"+data['crops']+"</td><td>"+data['suitable']+"</td><td>"+data['power']+"</td></tr>";
+				$('#droneStatsTable').append(row);
+			})
+	        .fail(function() {console.log("Get data error"); })
+	        .always(function() { });
+		};
+
+	}
+
+    </script>
+ </div>
+</body>
+</html>
+
+
+
+

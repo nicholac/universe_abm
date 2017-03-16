@@ -6,6 +6,9 @@ Created on 25 Dec 2016
 Generic Support Functions
 '''
 import numpy as np
+from environment import world
+
+'''
 import pickle
 from time import time
 import os
@@ -23,219 +26,80 @@ from data.tradableTypes import allTradables
 from data.agentTypes import allAgents
 from data.socialLinkTypes import allLinks
 from datetime import datetime
+'''
 
-def generateUniverse(save):
-    '''
-    Generate a new universe from blank:
-        - Stars - total number
-        - Planets - average per star
-        - Agents, Clans, Civs - Seed
-    Optionally save to pickle after generation
-    '''
-    print 'Generating Stars and Solar Systems...'
-    #Distribute stars randomly in our 3D space - dims in lightyears
-    world.starCoords = np.dstack([np.random.normal(world.universeDims[0]/2.0, world.universeDims[0]/3.0, size=world.numStars),
-                                 np.random.normal(world.universeDims[1]/2.0, world.universeDims[1]/3.0, size=world.numStars),
-                                 np.random.normal(world.universeDims[2]/2.0, world.universeDims[2]/3.0, size=world.numStars)])[0]
-    #Generate the star classes
-    for idx, c in enumerate(world.starCoords):
-        star = baseStar(idx, c, np.random.choice(world.starRadiusOpts),
-                        idx, np.random.choice(stars().keys()),
-                        np.random.choice(world.starEnergyOpts))
-        #Generate planets for this star
-        numPlanets = np.random.choice([world.avgPlanets/2.0, world.avgPlanets, world.avgPlanets*2.0])
-        #Generate coords for the entire system - initially these are relative to star centre
-        planetCoords = np.dstack([np.random.normal(world.solarSystemDims[0]/2.0, world.solarSystemDims[0]/3.0, size=numPlanets),
-                            np.random.normal(world.solarSystemDims[1]/2.0, world.solarSystemDims[1]/3.0, size=numPlanets),
-                            np.random.normal(world.solarSystemDims[2]/2.0, world.solarSystemDims[2]/3.0, size=numPlanets)]
-                            )[0]
-        for pidx, pc in enumerate(planetCoords):
-            #Generate the planet class
-            #Rebase coords relative to this star system
-            coords = c+pc
-            planet = basePlanet(idx, coords, np.random.choice(world.planetRadiusOpts),
-                                pidx, np.random.choice(planets().keys()),
-                                np.random.choice(world.planetEnergyOpts),
-                                np.random.choice(world.planetRawMatOpts))
-            star.planets.append(planet)
-            if star.planetCoords == None:
-                #First one
-                star.planetCoords = coords
-            else:
-                star.planetCoords = np.vstack((star.planetCoords, coords))
-            world.numPlanets+=1
-        world.stars.append(star)
-
-    #Generate Clans
-    generateClans()
-
-    #Agents
-    generateAgents()
-
-    #Save out the data
-    if save == True:
-        print 'Saving Universe...'
-        #TODO: Solve the Q pickle problem
-        #saveUniverse()
-    print 'Generate Universe Complete'
-
-
-def saveUniverse():
-    '''
-    Pickle the universe data and setup vars
-    '''
-    worldData = {'numStars':world.numStars,
-                'universeDims':world.universeDims,
-                'solarSystemDims':world.solarSystemDims,
-                'avgPlanets':world.avgPlanets,
-                'starCoords':world.starCoords,
-                'starEnergyOpts':world.starEnergyOpts,
-                'starRadiusOpts':world.starRadiusOpts,
-                'stars':world.stars,
-                'numPlanets':world.numPlanets,
-                'planetEnergyOpts':world.planetEnergyOpts,
-                'planetRawMatOpts':world.planetRawMatOpts,
-                'planetRadiusOpts':world.planetRadiusOpts,
-                'maxPopn':world.maxPopn,
-                'agentTypeMix':world.agentTypeMix,
-                'agentBaseVis':world.agentBaseVis,
-                'agentReprodChance':world.agentReprodChance,
-                'agents':world.agents,
-                'clans':world.clans,
-                'socialLinkAgeRate':world.socialLinkAgeRate,
-                'socialNet':world.socialNet,
-                'clanUIDs':world.clanUIDs,
-                'agentUIDs':world.agentUIDs,
-                'ticks':world.ticks,
-                'deadAgents':world.deadAgents,
-                'contracts':world.contracts
-               }
-    #Time based FN if we want no overwrites in future
-    timeFn = str(int(time()))
-    fp = open(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'saves', 'universedump.pkl'), 'w')
-    pickle.dump(worldData, fp)
-    fp.close()
-    print 'Done Save'
-
-
-def loadUniverse():
-    '''
-    Load the universe data back in from a pickle
-    '''
-    print 'Loading Universe...'
-    fp = open(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'saves', 'universedump.pkl'), 'r')
-    worldData = pickle.load(fp)
-    fp.close
-    world.numStars = worldData['numStars']
-    world.universeDims = worldData['universeDims']
-    world.solarSystemDims = worldData['solarSystemDims']
-    world.avgPlanets = worldData['avgPlanets']
-    world.starCoords = worldData['starCoords']
-    world.starEnergyOpts = worldData['starEnergyOpts']
-    world.starRadiusOpts = worldData['starRadiusOpts']
-    world.stars = worldData['stars']
-    world.numPlanets = worldData['numPlanets']
-    world.planetEnergyOpts = worldData['planetEnergyOpts']
-    world.planetRawMatOpts = worldData['planetRawMatOpts']
-    world.planetRadiusOpts = worldData['planetRadiusOpts']
-    world.maxPopn = worldData['maxPopn']
-    world.agentTypeMix = worldData['agentTypeMix']
-    world.agentBaseVis = worldData['agentBaseVis']
-    world.agentReprodChance = worldData['agentReprodChance']
-    world.agents = worldData['agents']
-    world.clans = worldData['clans']
-    world.linkAgeRate = worldData['socialLinkAgeRate']
-    world.socialNet = worldData['socialNet']
-    world.clanUIDs = worldData['clanUIDs']
-    world.agentUIDs = worldData['agentUIDs']
-    world.ticks = worldData['ticks']
-    world.deadAgents = worldData['deadAgents']
-    world.contracts = worldData['contracts']
-    print 'Done Loading Universe'
-
-
-def generateClans():
-    '''
-    Initialise a set a clans
-    '''
-    print 'Generating Clans...'
-    #Just one for now - at the first star system planet
-    rates = world.genClanRates()
-    clanUID = world.nextClanUID()
-    c = baseClan(world.stars[0].starIdx, world.stars[0].planets[0].position,
-                 0, clanUID, rates[0])
-    #Populate their blank resource knowledge and explorer job Q
-    for idx, s in enumerate(world.stars):
-        c.resourceKnowledge[idx] = {}
-        c.explorerQ.append((idx, world.starCoords[idx]))
-    #Add to dict lookup
-    world.clans[clanUID] = c
-    #Add Clan node into social graph
-    world.socialNet.add_node(clanUID, type='clan')
-    print 'Done Generating Clans'
-
-
-def generateAgents():
-    '''
-    Generate an initial seed number of agents for new universe
-    0=Explorer
-    1=Fabricator
-    2=Harvestor
-    3=Trader
-    '''
-    print 'Generating Agents...'
-    #Mix of types [ex, fa, ha, tr] (percentages of total popn)
-    #Single clan for now:
-    cnt = 0
-    clanUID = world.clans.keys()[0]
-    for idx, t in enumerate(world.agentTypeMix):
-        for a in range(int((t/100.0)*world.maxPopn)):
-            print cnt
-            cnt+=1
-            #Capacities & Rates
-            caps = world.genHarvestorCaps()
-            rates = world.genHarvestorRates()
-            #Get the next agent UID
-            agentUID = world.nextAgentUID()
-            if idx == 0:
-                #Explorer
-                a = explorer(0, agentUID,
-                              world.clans[clanUID].originCoords,
-                              clanUID,
-                              np.random.choice([9,10]))
-            elif idx == 1:
-                #Fabricator
-                a = fabricator(1, agentUID,
-                              world.clans[clanUID].originCoords,
-                              clanUID,
-                              np.random.choice(allTradables().keys()))
-            elif idx == 2:
-                #Harvestor
-                caps = world.genHarvestorCaps()
-                rates = world.genHarvestorRates()
-                a = harvestor(2, agentUID,
-                              world.clans[clanUID].originCoords,
-                              clanUID,
-                              caps[0], caps[1], caps[2],
-                              rates[0], rates[1], rates[2], rates[3])
-            elif idx == 3:
-                #Trader
-                a = trader(3, agentUID,
-                              world.clans[clanUID].originCoords,
-                              world.clans.keys()[0])
-            else:
-                pass
-            #Add as node in world graph
-            world.socialNet.add_node(agentUID, type='agent_{}'.format(allAgents()[idx]))
-            #Initialise the agents social network link with clan here (its a new universe)
-            a.addSocialLink(clanUID, allLinks()[0], world.clanLinkStren)
-            #Add to world lookup
-            world.agents[agentUID] = a
-            #Add to clan lookup
-            world.clans[clanUID].agents.append(agentUID)
-
-    print 'Done Generating Agents'
-
+#==============================================================#
+#DEPRECATED TO MONGO BUT USEFUL FOR INIT
+# def generateAgents():
+#     '''
+#     Generate an initial seed number of agents for new universe
+#     0=Explorer
+#     1=Fabricator
+#     2=Harvestor
+#     3=Trader
+#     '''
+#     print 'Generating Agents...'
+#     #Mix of types [ex, fa, ha, tr] (percentages of total popn)
+#     #Single clan for now:
+#     cnt = 0
+#     clanUID = world.clans.keys()[0]
+#     for idx, t in enumerate(world.agentTypeMix):
+#         for a in range(int((t/100.0)*world.maxPopn)):
+#             print cnt
+#             cnt+=1
+#             #Capacities & Rates
+#             caps = world.genHarvestorCaps()
+#             rates = world.genHarvestorRates()
+#             maxVelMag = world.genAgentMaxVelMag()
+#             #Get the next agent UID
+#             agentUID = world.nextAgentUID()
+#             if idx == 0:
+#                 #Explorer
+#                 a = explorer(0, agentUID,
+#                               world.clans[clanUID].originCoords,
+#                               clanUID, world.agentBaseVis, world.agentReprodChance,
+#                               world.timeStep, world.socialLinkAgeRate, maxVelMag,
+#                               np.random.choice([9,10]))
+#             elif idx == 1:
+#                 #Fabricator
+#                 a = fabricator(1, agentUID,
+#                               world.clans[clanUID].originCoords,
+#                               clanUID,
+#                               clanUID, world.agentBaseVis, world.agentReprodChance,
+#                               world.timeStep, world.socialLinkAgeRate, maxVelMag,
+#                               np.random.choice(allTradables().keys()))
+#             elif idx == 2:
+#                 #Harvestor
+#                 caps = world.genHarvestorCaps()
+#                 rates = world.genHarvestorRates()
+#                 a = harvestor(2, agentUID,
+#                               world.clans[clanUID].originCoords,
+#                               clanUID,
+#                               clanUID, world.agentBaseVis, world.agentReprodChance,
+#                               world.timeStep, world.socialLinkAgeRate, maxVelMag,
+#                               caps[0], caps[1], caps[2],
+#                               rates[0], rates[1], rates[2], rates[3])
+#             elif idx == 3:
+#                 #Trader
+#                 a = trader(3, agentUID,
+#                               clanUID, world.agentBaseVis, world.agentReprodChance,
+#                               world.timeStep, world.socialLinkAgeRate, maxVelMag,
+#                               world.clans[clanUID].originCoords,
+#                               world.clans.keys()[0])
+#             else:
+#                 pass
+#             #Add as node in world graph
+#             world.globalSocialNet.add_node(agentUID, type='agent_{}'.format(allAgents()[idx]))
+#             #Initialise the agents social network link with clan here (its a new universe)
+#             world.globalSocialNet.add_edge(agentUID, clanUID, {allLinks()[0]:world.clanLinkStren})
+#             #Add to world lookup
+#             #NEXT: WORK THROUGH MOVING AGENT STORAGE TO SYSTEMS
+#             world.agents[agentUID] = a
+#             #Add to clan lookup
+#             world.clans[clanUID].agents.append(agentUID)
+#
+#     print 'Done Generating Agents'
+#==============================================================#
 
 def delAgent(agentUID, reason):
     '''
@@ -246,65 +110,187 @@ def delAgent(agentUID, reason):
         - Star system
         - Record death
     '''
-    try:
-        world.socialNet.remove_node(agentUID)
-    except:
-        print 'Failed to Delete an agent from social Net: {}'.format(agentUID)
-    #Clan
-    try:
-        idx = world.clans[world.agents[agentUID].clanID].agents.index(agentUID)
-        world.clans[world.agents[agentUID].clanID].agents.pop(idx)
-    except:
-        print 'Failed to Delete an agent from Clan: {}'.format(agentUID)
-    #Star Sys - horrific!
-    try:
-        world.stars[world.agents[agentUID].currStarSys].pop(world.stars[world.agents[agentUID].currStarSys].agents.index(agentUID))
-    except:
-        print 'Failed to Delete an agent from Star Sys: {}'.format(agentUID)
-    #Class
-    world.agents.pop(agentUID)
-    #Record death
-    world.deadAgents[agentUID] = {'reason':reason,
-                                  'dtg':datetime.now().isoformat()}
+    pass
 
 
-def socialNetEntropy():
+def starTemplate():
     '''
-    Globally degrade the social network each tick
-    This is a first basic implementation and presumes:
-        - Agent links are non-directional (they both know each other equally well)
-        - When links are created they are even between agents (They both know each other equally well)
+    Template Doc for stars
     '''
-    for (u,v,d) in world.socialNet.edges(data='social'):
-        #Dont age clan, family etc
-        if d.has_key('social'):
-            d['social']-=world.socialLinkAgeRate
-            if d['social'] < world.socialLinkMinStren:
-                d['social'] = world.socialLinkMinStren
-            if d['social'] > world.socialLinkMaxStren:
-                d['social'] = world.socialLinkMaxStren
+    starDoc = {'_type':'star',
+               'position':[], #3d position
+               'radius':0.0, #size of star
+               'typeId':0, #type of star
+               'energyStore': 0, #energy star holds
+               'epoch':0, #processing epoch the star system is on
+               'status':'waiting'
+               }
+    return starDoc
 
-
-
-def export2Graphviz():
+def planetTemplate():
     '''
-    Export the current graph to graphviz (manually as the internal funcs dont work on mac atm)
+    Planet Template Doc
     '''
-    import os
-    os.environ['PATH'] = os.environ['PATH']+':/usr/local/bin'
-    G = pgv.AGraph()
-    G.add_nodes_from(world.socialNet.nodes())
-    for e in world.socialNet.edges(data=True):
-        if e[2].has_key('social'):
-            G.add_edge(e[0], e[1], label=e[2]['social'])
-        elif e[2].has_key('clan'):
-            G.add_edge(e[0], e[1], label=e[2]['clan'])
-    G.layout(prog='dot')
-    fn = "/Users/dusted-ipro/Documents/LiClipse Workspace/universe_abm/data/saves/{}{}".format(world.ticks, '_social_net.png')
-    G.draw(fn)
+    planetDoc = {'_type':'planet',
+                 'starId':0, #Mongo Doc ID of the star system in which this planet resides
+                 'position':[], #3D position of this star
+                 'radius':0.0, #Size
+                 'typeId':0, #Type of planet
+                 'energyStore':0.0, #energy storage
+                 'rawMatStore':0.0 #raw material storage
+                 }
+    return planetDoc
+
+def clanTemplate():
+    '''
+    Template for Clans
+    '''
+    clan = {'_type':'clan',
+            'starId':0, # mongo doc ID of home star
+            'position':[], #coordinates of home planet
+            'planetId':0, #mongo doc id of home planet
+            'energyConsumeRate':0.0, #rate at which the society consumes energy
+            'resourceKnowledge':{}, #data about known resources in the universe
+            'starCatalogue':None
+            }
+    return clan
+
+def agentTemplate():
+    '''
+    Template doc for agent
+    '''
+    a = {'_type':'agent',
+         'agentType':0, #Type of agent
+         'clanId':0, #Mongo Doc ID of clan
+         'vis':0.0, #Range of visibility
+         'reprodChance':0.0, #Chance of reproduction
+         'socialLinkAgeRate':0.0, #Rate at which the agents social network ages
+         'velMag':0.0, #Maximum Velocity
+         'defence':0.0,
+         'offence':0.0,
+         'canReproduce':False,
+         'reproduceOpts':[],
+         'generation':0,
+         'parent':False, #Whether the agent has already reproduced
+         'actyGroup':0, #Current agent activity group
+         'actyData':{'complete':False,
+                     'actyId':0, #Current acty within the group
+                     'actyIdx':0}, #Index of this acty in the group
+         'destination':None, #Where the agent is heading to
+         'position':[0.0, 0.0, 0.0], #3D position
+         'velocity':[0.0, 0.0, 0.0], #3D velocity unit
+         'starId':0, #star system agent currently resides in
+         'epoch':0, #Current processing epoch
+         'messages':[] #Inter-agent messages
+         }
+    return a
+
+def explorerTemplate():
+    '''
+    Explorer agent template - extends agentTemplate
+    '''
+    a = {'resourceType':np.random.choice([9,10])}
+    #Use the base agent template
+    b = agentTemplate()
+    b.update(a.copy())
+    return b
 
 
+#Probability generation
+def positiveProbsLin(numSamps):
+    '''
+    Create a linear (y=x) distribution weighted toward higher numbers
+    '''
+    return np.arange(numSamps)/np.sum(np.arange(numSamps))
 
+
+def negativeProbsLin(numSamps):
+    '''
+    Create a linear (y=x) distribution weighted toward lower numbers
+    '''
+    return positiveProbsLin(numSamps)[::-1]
+
+
+def positiveProbsPow(numSamps):
+    '''
+    Create a power (y=x^2) distribution weighted toward higher numbers
+    '''
+    t = np.power(np.arange(numSamps),2.0)
+    return t/np.sum(t)
+
+
+def negativeProbsPow(numSamps):
+    '''
+    Create a linear (y=x^2) distribution weighted toward lower numbers
+    '''
+    return positiveProbsPow(numSamps)[::-1]
+
+
+def positiveProbsExp(numSamps):
+    '''
+    Create a exponential distribution weighted toward higher numbers
+    '''
+    t = np.exp2(np.arange(numSamps))
+    return t/np.sum(t)
+
+
+def negativeProbsExp(numSamps):
+    '''
+    Create a exponential distribution weighted toward lower numbers
+    '''
+    return positiveProbsExp(numSamps)[::-1]
+
+def ga_fitness_template():
+    '''
+    Fitness doc template for base Genetic Algo fitness to breed
+    0=Explorer
+    1=Trader
+    2=Harvestor
+    3=Soldier
+    '''
+    out = {0:{'vis':{'val':world.au2Ly(3.0), 'operator':np.greater, 'desc':'visibility'},
+                       'velMag':{'val':world.au2Ly(4.0), 'operator':np.greater, 'desc':'velocity max'},
+                       'defence':{'val':0.1, 'operator':np.greater, 'desc':'defensive-ness'}},
+           2:{'vis':{'val':world.au2Ly(3.0), 'operator':np.less, 'desc':'visibility'},
+                       'velMag':{'val':world.au2Ly(3.0), 'operator':np.greater, 'desc':'velocity max'},
+                       'defence':{'val':0.1, 'operator':np.greater, 'desc':'defensive-ness'}},
+           1:{'velMag':{'val':world.au2Ly(7.0), 'operator':np.greater, 'desc':'velocity max'},},
+           3:{'vis':{'val':world.au2Ly(2.0), 'operator':np.greater, 'desc':'visibility'},
+                       'velMag':{'val':world.au2Ly(2.0), 'operator':np.greater, 'desc':'velocity max'},
+                       'offence':{'val':0.3, 'operator':np.greater, 'desc':'offensive-ness'},
+                       'defence':{'val':0.3, 'operator':np.greater, 'desc':'defensive-ness'}}
+           }
+    return out
+
+def crossover_traits():
+    '''
+    List of all traits that can be crossed-over
+    '''
+    return ['vis', 'velMag', 'defence', 'offence']
+
+def vis_bounds():
+    '''
+    Min and max for visibility trait
+    '''
+    return world.au2Ly(0.1), world.au2Ly(50.0)
+
+def vel_mag_bounds():
+    '''
+    Min and max for vel_mag trait
+    '''
+    return world.au2Ly(1.0), world.au2Ly(10.0)
+
+def offence_bounds():
+    '''
+    Min and max for offence trait
+    '''
+    return 0.0, 1.0
+
+def mutation_bounds():
+    '''
+    Min and max for amount traits can be mutated by (%)
+    '''
+    return -0.1, 0.1
 
 
 

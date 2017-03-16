@@ -1,0 +1,119 @@
+How the Mongo Stuff Works:
+
+Doc types:
+- world (holds global information like population and init vars)
+
+- star
+-- a celestial object that forms the basis for star-system processing
+-- No nested docs but the document id is used for system parallel processing (see below)
+
+- planet
+-- A celestial object containing resources
+
+- clan
+-- data about a specific clan (society) to which agents belong
+-- This data defines the socity and the nature of the agents within
+-- Clans hold the societies information about known stars, enemies etc, depending on the society
+
+- agent
+-- an agent in the world
+-- base document holds standard info about the agent
+-- this is extended for each different type of agent depending on what they require
+
+
+Processing Epochs:
+
+- An epoch consists of a single turn for all agents in the universe
+- Systems waiting processing for the current epoch (as store in the world doc) are pulled by nodes
+then a single turn for every agent in the system is processsed by the node.
+The node updates the system status when all agents are complete.
+-- System processing states:
+--- status:waiting - waiting to be processed for this epoch
+--- status:processing - currently being processed
+--- status:complete - completed processing for the current epoch
+
+For each system a single processing epoch involves iterating through all the agents in that system
+and running their current task for one turn step.  This iteration is currently a simple for-loop,
+however this could lead to the model being skewed by the order agents are return in - survival of
+the first retrieved.
+
+
+Agent movement between systems:
+
+- When an agent is ready to move to another system (during the processing of the system its currently in)
+currently its starId will simply be changed to the other system, however this could lead to
+agents having two turns for a single epoch.  For now this will be ignored, but it could be solved
+through some use of a 'hyperspace' buffer.
+
+
+Agent distance measurement within system:
+
+For agents interacting based on distance we need to generate a list of close agents - this is done
+
+
+
+Agent interaction
+
+Agents do actions first, then move (if its part of the activity)
+Agents interacting with other agents do so in a one way manner
+So think Incubation game:
+- Turns
+- Aliens on sentry can respond to being attacked
+- Aliens then get their own turn aswell
+
+
+So agents need to be able to effect other agents during their own processing
+This could be agents interacting:
+- Within visible range
+-- This can be achieved as with in-system below - except filtered for those it can see
+
+- Within system
+-- This can be achieved by fetching the agent that its interacting with
+from the list of those in system being processed.  Because they are dicts they can be
+altered in-place, then the changes will be in there for when the effected agents comes to processing
+
+- across systems
+-- This for now we'll say is not possible?
+-- In future it could be achieved by:
+--- Sending messages for agents to pick up:
+---- Agent1 -[knows]-> Agent2
+---- Agent1 appends a message to the message queue of Agent2
+---- If Agent2 has already been processed it'll pick that up next time
+---- If not then it picks th message up and acts accordingly
+
+
+
+Agent Method processing:
+- Agent activities are all stored in action_types
+which is a dict containing lookups between the acty code and the func that processes that acty
+- Acty types also contain template data about each acty
+This template data is embedded with the agent when its undertaking an acty
+e.g.: acty = starJump, actyData = {tgtSys:100}
+
+- Agent activity sequencing is also stored in action_types
+This provides a means of cycling through agent activity
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

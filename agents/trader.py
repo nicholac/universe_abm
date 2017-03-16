@@ -5,7 +5,8 @@ Created on 24 Dec 2016
 '''
 import numpy as np
 
-from environment import world
+#from environment import world
+#NEXT: WORK THROUGH THE ACTUAL TRADER ACTION LOGIC
 from agents.base import baseAgent
 from data.tradableTypes import allTradables
 from data.actionTypes import allActions
@@ -48,6 +49,8 @@ class trader(baseAgent):
                            }
         #Actions offered as services to others
         self.actionsOffered = [3]
+        #Contracts are actions that have been demanded as being required
+        self.activeContracts = {}
         #Current Action (id matches actionTypes lookup)
         #Default on init
         for k in self.actionsAll.keys():
