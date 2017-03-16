@@ -48,7 +48,12 @@ def gen_clan_rates():
     '''
     return (np.random.choice(np.linspace(0.01, 1.0)), 0.0)
 
-
+def gen_agent_vel_mag():
+    '''
+    Randomly generate an agent max velocity magnitude
+    Max velocities - init randomly so genetics pass the trait along
+    '''
+    return np.random.choice(np.linspace(au2Ly(1.0), au2Ly(10.0)))
 
 
 #Probability generation
