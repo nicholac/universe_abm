@@ -6,7 +6,6 @@ Created on 25 Dec 2016
 import numpy as np
 
 from data.celestialTypes import planets, stars
-from environment.sensing import closestStar
 
 class basePlanet(object):
     '''

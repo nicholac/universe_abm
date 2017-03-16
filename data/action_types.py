@@ -13,8 +13,8 @@ Explorer Resource Search: Get Job, move out star, jump, move planets, move out s
 '''
 from itertools import cycle
 
-from mongo_agents import base
-from mongo_agents import explorer
+from agents import base
+from agents import explorer
 
 
 def action_sequences():

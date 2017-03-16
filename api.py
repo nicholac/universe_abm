@@ -13,7 +13,7 @@ from pymongo import MongoClient, ReturnDocument
 
 from flask import Flask, render_template, jsonify, g, request, Response, abort
 
-from data.supportFuncs import ga_fitness_template
+from data.support_funcs import ga_fitness_template
 from genetics.algorithms import fitness
 
 # Ensure paths then use . package notation and __init__ files.

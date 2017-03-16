@@ -5,7 +5,7 @@ Created on 25 Dec 2016
 '''
 
 
-def allAgents():
+def all_agents():
     '''
     ::returns Dict All agent types
     '''

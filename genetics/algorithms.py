@@ -18,18 +18,7 @@ import numpy as np
 from random import random, choice
 import copy
 
-from data.supportFuncs import agentTemplate, explorerTemplate, crossover_traits, mutation_bounds, positiveProbsExp, ga_fitness_template
-
-
-def age_kill(agent_doc, max_age):
-    '''
-    Kill of agent if getting too old
-    Probability weighted toward higher chance when older
-    '''
-    #Generate a distro so more chance of dying when older
-    r = range(0, max_age, 50)
-    chk = np.random.choice(r, p=positiveProbsExp(len(r)))
-    return agent_doc['epoch'] > chk
+from data.support_funcs import agentTemplate, explorerTemplate, crossover_traits, mutation_bounds, positiveProbsExp, ga_fitness_template
 
 
 def reproduce(agent_doc, mongo_coll, world_doc):
