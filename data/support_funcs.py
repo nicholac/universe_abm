@@ -49,6 +49,8 @@ def gen_clan_rates():
     return (np.random.choice(np.linspace(0.01, 1.0)), 0.0)
 
 
+
+
 #Probability generation
 def positive_probs_lin(numSamps):
     '''
