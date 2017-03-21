@@ -63,7 +63,28 @@
 	},
 	"gaInfo":{
 				"crossoverTraits":["vis", "velMag", "defence", "offence"],
-				"mutationBounds":{"min":-0.1, "max":0.1}
+				"mutationBounds":{"min":-0.1, "max":0.1},
+				"fitnessReqs":{
+					"explorer":{
+									"vis":{"val":3.0, "operator":"gte"},
+									"velMag":{"val":4.0, "operator":"gte"},
+									"defence":{"val":0.1, "operator":"gte"},
+								},
+					"harvestor":{
+									"velMag":{"val":7.0, "operator":"gte"},
+									"defence":{"val":3.0, "operator":"gte"},
+								},
+					"trader":{
+									"velMag":{"val":4.0, "operator":"gte"},
+									"defence":{"val":3.0, "operator":"gte"},
+								},
+					"soldier":{
+									"vis":{"val":3.0, "operator":"gte"},
+									"velMag":{"val":7.0, "operator":"gte"},
+									"defence":{"val":3.0, "operator":"gte"},
+									"offence":{"val":3.0, "operator":"gte"}
+								}
+				}
 	},
 	"celestialInfo":{
 		"starInfo":{

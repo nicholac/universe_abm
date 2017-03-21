@@ -13,8 +13,8 @@ from pymongo import MongoClient, ReturnDocument
 
 from flask import Flask, render_template, jsonify, g, request, Response, abort
 
-from data.support_funcs import ga_fitness_template
-from genetics.algorithms import fitness
+#Internal
+from genetics.algorithms import fitness_sametype,fitness_scoring_sametype
 
 # Ensure paths then use . package notation and __init__ files.
 this_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -118,11 +118,12 @@ def generation_fitness():
     yPopDead = ['Total Gen Pop Dead']
     gensDict = {}
     agents = list(universeColl.find({'_type':'agent'}))
+    world_doc = list(universeColl.find({'_type':'world'}))
     for agent in agents:
         if agent['generation'] not in gensDict.keys():
             gensDict[agent['generation']] = {'fit':0, 'unfit':0, 'totalAlive':0, 'totalDead':0}
-        fitness_chk = fitness(agent, ga_fitness_template())
-        if [i['canReprod'] for i in fitness_chk][0] != True:
+        fitness_chk = fitness_sametype(agent, fitness_scoring_sametype(agent,world_doc))
+        if fitness_chk['canReprod'] != True:
             #Not fit for explorer
             gensDict[agent['generation']]['unfit']+=1
         else:
@@ -134,9 +135,8 @@ def generation_fitness():
     for agent in deadAgents:
         if agent['generation'] not in gensDict.keys():
             gensDict[agent['generation']] = {'fit':0, 'unfit':0, 'totalAlive':0, 'totalDead':0}
-        fitness_chk = fitness(agent, ga_fitness_template())
-        #if not any([i['canReprod'] for i in fitness_chk]) == True:
-        if [i['canReprod'] for i in fitness_chk][0] != True:
+        fitness_chk = fitness_sametype(agent, fitness_scoring_sametype(agent,world_doc))
+        if fitness_chk['canReprod'] != True:
             #Not fit for anything
             gensDict[agent['generation']]['unfit']+=1
         else:

@@ -33,11 +33,12 @@ def reproduce(agent_doc, mongo_coll, world_doc):
         return
     #Is the agent fit to reproduce - with any type?
     #Do this first so we get a pool of potential partners when at max pop
-    fitness_chk = fitness(agent_doc, fitness_scoring())
+    fitness_chk = fitness_sametype(agent_doc, fitness_scoring_sametype(agent_doc,
+                                                                       world_doc))
     #NEXT: It gets stuck here when turning reqs back down because existing agemts dont get fitness recalculated
     #if agent_doc['canReproduce'] == False:
     #Is it fit to reproduce with its OWN TYPE
-    if [i['canReprod'] for i in fitness_chk if i['_type'] == agent_doc['agentType']][0] == False:
+    if fitness_chk['canReprod'] == False:
         #Not fit to repro with own type
     #Any Type:
     #if not any([i['canReprod'] for i in fitness_chk]) == True:
@@ -59,7 +60,6 @@ def reproduce(agent_doc, mongo_coll, world_doc):
 
     #Can Reproduce - Find a partner in same clan - randomise select
     #For mixed breeding:
-    #partner_type = [i['_type'] for i in fitness_chk if i['canReprod'] == True]
     partners = list(mongo_coll.find({'_type':'agent',
                           'clanId':agent_doc['clanId'],
                           'canReproduce':True,
@@ -79,8 +79,7 @@ def reproduce(agent_doc, mongo_coll, world_doc):
     scores = []
     for p in partners:
         #Only explorers at this stage
-        score = [i['fitScore'] for i in p['reproduceOpts'] if i['_type'] == agent_doc['agentType']][0]
-        scores.append(score)
+        scores.append(p['fitScore'])
     #Convert in probs - get sum of all scores, convert scores to proportion of sum
     #print 'scores:{}'.format(scores)
     #try:
@@ -155,7 +154,34 @@ def reproduce(agent_doc, mongo_coll, world_doc):
 
 
 
-def fitness(agent, fitness_doc):
+def fitness_sametype(agent, fitness_doc):
+    '''
+    Checks if the given agent has the skills required to reproduce with an agent of the same type
+    ::param agent agent doc
+    ::param fitness dict of required attributes - for the same type
+    ::return boolean True - can reproduce, false cant
+    '''
+    #Agent Types
+    chk = True
+    #Generate some indication of HOW fit, other than just boolean
+    fitScore = 0.0
+    for i in fitness_doc.keys():
+        #Fitness measures
+        if fitness_doc[i]['operator'](agent[i], fitness_doc[i]['val']) == False:
+            chk = False
+        #Add to fit score - get the absolute diff
+        #So further away it is in either greater or less direction the fitter you are
+        fitScore += abs(agent[i] - fitness_doc[i]['val'])
+    if chk == True:
+        d = {'canReprod':chk,
+            'fitScore':fitScore}
+    else:
+        d = {'canReprod':chk,
+            'fitScore':0.0}
+    return d
+
+
+def fitness_crosstype(agent, fitness_doc):
     '''
     Checks if the given agent has the skills required to reproduce with an agent type(s)
     ::param agent agent doc
@@ -170,7 +196,6 @@ def fitness(agent, fitness_doc):
         fitScore = 0.0
         for i in fitness_doc[k].keys():
             #Fitness measures
-            #print fitness_doc[k][i]['operator'], agent[i], fitness_doc[k][i]['val']
             if fitness_doc[k][i]['operator'](agent[i], fitness_doc[k][i]['val']) == False:
                 chk = False
             #Add to fit score - get the absolute diff
@@ -242,26 +267,28 @@ def mutation(agent, trait_list, mutation_min, mutation_max):
         agent[t] += (np.random.choice(np.linspace(mutation_min, mutation_max)) * agent[t])
 
 
-def fitness_scoring():
+def fitness_scoring_sametype(agent_doc, world_doc):
     '''
+    ::param fitness_reqs dict from world_doc / config
     Fitness doc template for base Genetic Algo fitness to breed
     0=Explorer
     1=Trader
     2=Harvestor
     3=Soldier
     '''
-    out = {0:{'vis':{'val':au2Ly(3.0), 'operator':np.greater, 'desc':'visibility'},
-                       'velMag':{'val':au2Ly(4.0), 'operator':np.greater, 'desc':'velocity max'},
-                       'defence':{'val':0.1, 'operator':np.greater, 'desc':'defensive-ness'}},
-           2:{'vis':{'val':au2Ly(3.0), 'operator':np.less, 'desc':'visibility'},
-                       'velMag':{'val':au2Ly(3.0), 'operator':np.greater, 'desc':'velocity max'},
-                       'defence':{'val':0.1, 'operator':np.greater, 'desc':'defensive-ness'}},
-           1:{'velMag':{'val':au2Ly(7.0), 'operator':np.greater, 'desc':'velocity max'},},
-           3:{'vis':{'val':au2Ly(2.0), 'operator':np.greater, 'desc':'visibility'},
-                       'velMag':{'val':au2Ly(2.0), 'operator':np.greater, 'desc':'velocity max'},
-                       'offence':{'val':0.3, 'operator':np.greater, 'desc':'offensive-ness'},
-                       'defence':{'val':0.3, 'operator':np.greater, 'desc':'defensive-ness'}}
-           }
+    out = {}
+    #Flip the agent types lookup
+    aType = world_doc['universeInfo']['agentTypes'].keys()[world_doc['universeInfo']['agentTypes'].values().index(agent_doc['agentType'])]
+    reqs = world_doc['gaInfo']['fitnessReqs'][aType]
+    for k in reqs.keys():
+        reqs[k]['val'] = au2Ly(reqs[k]['val'])
+        if reqs[k]['operator'] == 'gte':
+            reqs[k]['operator'] = np.greater
+        elif reqs[k]['operator'] == 'lte':
+            reqs[k]['operator'] = np.less
+        else:
+            print 'Unknown operator for fitness_score'
+            return
     return out
 
 
