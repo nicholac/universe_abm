@@ -17,8 +17,7 @@ Future potential additions:
 import numpy as np
 from random import random, choice
 import copy
-
-from data.support_funcs import agentTemplate, explorerTemplate, crossover_traits, mutation_bounds, positiveProbsExp, ga_fitness_template
+from data.support_funcs import au2Ly
 
 
 def reproduce(agent_doc, mongo_coll, world_doc):
@@ -34,7 +33,7 @@ def reproduce(agent_doc, mongo_coll, world_doc):
         return
     #Is the agent fit to reproduce - with any type?
     #Do this first so we get a pool of potential partners when at max pop
-    fitness_chk = fitness(agent_doc, ga_fitness_template())
+    fitness_chk = fitness(agent_doc, fitness_scoring())
     #NEXT: It gets stuck here when turning reqs back down because existing agemts dont get fitness recalculated
     #if agent_doc['canReproduce'] == False:
     #Is it fit to reproduce with its OWN TYPE
@@ -102,12 +101,18 @@ def reproduce(agent_doc, mongo_coll, world_doc):
     #NOTE: Here we are crossing over all available traits, instead of just the ones used for fitness selection
     #We may have situations where two different types of agents have been selected ,
     #This means that no matter what the pairing we include all traits in the genetic crossover
-    gene_split_pos = np.random.choice(range(len(crossover_traits())))
-    child_1, child_2 = crossover(agent_doc, partner_doc, crossover_traits(), gene_split_pos)
+    gene_split_pos = np.random.choice(range(len(world_doc['gaInfo']['crossoverTraits'])))
+    child_1, child_2 = crossover(agent_doc, partner_doc,
+                                 world_doc['gaInfo']['crossoverTraits'], gene_split_pos)
 
     #Mutate
-    mutation(child_1, crossover_traits())
-    mutation(child_2, crossover_traits())
+    mutation(child_1,
+             world_doc['gaInfo']['crossoverTraits'],
+             world_doc['gaInfo']['mutationBounds']['min'],
+             world_doc['gaInfo']['mutationBounds']['max'])
+    mutation(child_2, world_doc['gaInfo']['crossoverTraits'],
+             world_doc['gaInfo']['mutationBounds']['min'],
+             world_doc['gaInfo']['mutationBounds']['max'])
 
     #Reset some child attrs
     clan_doc = mongo_coll.find({'_id':agent_doc['clanId']},
@@ -225,7 +230,7 @@ def crossover(agent_1, agent_2, trait_list, gene_split_pos):
     return child_1_doc, child_2_doc
 
 
-def mutation(agent, trait_list):
+def mutation(agent, trait_list, mutation_min, mutation_max):
     '''
     Mutate a new childs genes by random factors
     ::param agent agent child doc
@@ -234,11 +239,30 @@ def mutation(agent, trait_list):
     '''
     #Mutate each trait a little - (1 - 30% of what it is after crossover)
     for t in trait_list:
-        bounds = mutation_bounds()
-        agent[t] += (np.random.choice(np.linspace(bounds[0], bounds[1])) * agent[t])
+        agent[t] += (np.random.choice(np.linspace(mutation_min, mutation_max)) * agent[t])
 
 
-
+def fitness_scoring():
+    '''
+    Fitness doc template for base Genetic Algo fitness to breed
+    0=Explorer
+    1=Trader
+    2=Harvestor
+    3=Soldier
+    '''
+    out = {0:{'vis':{'val':au2Ly(3.0), 'operator':np.greater, 'desc':'visibility'},
+                       'velMag':{'val':au2Ly(4.0), 'operator':np.greater, 'desc':'velocity max'},
+                       'defence':{'val':0.1, 'operator':np.greater, 'desc':'defensive-ness'}},
+           2:{'vis':{'val':au2Ly(3.0), 'operator':np.less, 'desc':'visibility'},
+                       'velMag':{'val':au2Ly(3.0), 'operator':np.greater, 'desc':'velocity max'},
+                       'defence':{'val':0.1, 'operator':np.greater, 'desc':'defensive-ness'}},
+           1:{'velMag':{'val':au2Ly(7.0), 'operator':np.greater, 'desc':'velocity max'},},
+           3:{'vis':{'val':au2Ly(2.0), 'operator':np.greater, 'desc':'visibility'},
+                       'velMag':{'val':au2Ly(2.0), 'operator':np.greater, 'desc':'velocity max'},
+                       'offence':{'val':0.3, 'operator':np.greater, 'desc':'offensive-ness'},
+                       'defence':{'val':0.3, 'operator':np.greater, 'desc':'defensive-ness'}}
+           }
+    return out
 
 
 

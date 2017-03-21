@@ -1,0 +1,31 @@
+What are the goals?
+
+Citizen quality of life / fitness { Aggregated agent fitness functions }
+Maximise resource store { Resource stores - absolute count }
+Resilience { Resource consumption rate vs resource stores }
+Dominance {  }
+Strength - offensive power { Number and quality of soldiers - offense scores }
+Strength - defensive power { NUmber and quality of soldiers - defence scores }
+Social links / cohesion { Social net scoring - aggregated agent between-ness for whole clan }
+Social influence { External link scoring, positive / regularity of interaction with other clans - positive }
+Global Influence { Total area of influence - harvestors, agents, soldiers - spatial measure }
+Environment Knowledge { Star system knowledge store vs num planets / stars }
+Technology / tech level { Absolute tech level / ranking }
+Battles won / lost { Number of times agent won / lost }
+Collection Rate - energy, raw mats { Absolute collection rate }
+Fabrication rate { Absolute fabrication rate }
+Trade Health - { Amount of fulfilled contracts vs waiting contracts }
+Economic Health { Spend vs save, amount of resources in area of influence }
+Diplomatic Health { Standing with other clans aggregated }
+
+
+These need to be combined into a single score that can be compared between clans
+All clans just aim to maximise their ranking across all of the above - its for them to figure out the strategy.
+The closer they are to top rank in all of the above the higher the reward.
+e.g.:
+[1,2,1] = 3/4 = 0.75
+[2,1,2] = 3/5 = 0.6
+[3,3,3] = 3/9 = 0.33
+
+This can also then drive the modelling, as the feature vector will be measures of the above.
+For the features though we dont want to encode the rankings - better to encode the absolute scorings

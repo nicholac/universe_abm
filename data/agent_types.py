@@ -4,7 +4,6 @@ Created on 25 Dec 2016
 @author: dusted-ipro
 '''
 
-
 def all_agents():
     '''
     ::returns Dict All agent types

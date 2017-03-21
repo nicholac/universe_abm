@@ -5,7 +5,53 @@ Created on 25 Dec 2016
 
 Generic Support Functions
 '''
+import json
+import os
+
 import numpy as np
+
+#CONFIGS
+def load_config(master):
+    '''
+    Load Config JSON to dict
+    ::param master boolean - running as master?
+    '''
+    try:
+        if master == True:
+            config_file = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'config', 'master.json')
+        else:
+            config_file = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'config', 'slave.json')
+        fp = open(config_file, 'r')
+        if fp:
+            config_data = json.load(fp)
+        else:
+            raise Exception
+        return config_data
+    except:
+        return None
+
+
+def save_config(master, config_data):
+    '''
+    Save Config dict to JSON
+    ::param master boolean - running as master?
+    ::param config_data dict configuration data
+    '''
+    try:
+        if master == True:
+            config_file = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'config', 'master.json')
+        else:
+            config_file = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'config', 'slave.json')
+        fp = open(config_file, 'r')
+        if fp:
+            config_data = json.dump(config_data, fp)
+        else:
+            raise Exception
+        return True
+    except:
+        return None
+
+
 
 #WORLD UNITS
 #UNITS - Astro Units to Light Years
@@ -22,41 +68,46 @@ def ly2Au(ly):
     return ly/(1.538*10e-5)
 
 #WORLD RATES
-def gen_harvestor_caps():
+def gen_harvestor_caps(raw_min, raw_max,
+                       nrg_min, nrg_max,
+                       hg_min, hg_max):
     '''
     Randomly generate capacities for harvestor
     Tons
     '''
-    return (np.random.choice(np.linspace(10.0, 100.0)), #Raw Mat Cap
-            np.random.choice(np.linspace(10.0, 100.0)), #Energy Cap
-            np.random.choice(np.linspace(10.0, 100.0))) #HG Cap
+    return (np.random.choice(np.linspace(raw_min, raw_max)), #Raw Mat Cap
+            np.random.choice(np.linspace(nrg_min, nrg_max)), #Energy Cap
+            np.random.choice(np.linspace(hg_min, hg_max))) #HG Cap
 
-def gen_harvestor_rates():
+def gen_harvestor_rates(nrg_harv_min, nrg_harv_max,
+                        raw_harv_min, raw_harv_max,
+                        hg_min, hg_max,
+                        ngr_min, nrg_max):
     '''
     Randomly generate harvest & consume rates for harvestor
     Tons per tick
     '''
-    return (np.random.choice(np.linspace(0.1, 1.0)), #Energy Harvest
-            np.random.choice(np.linspace(0.1, 1.0)), #Raw Mat Harvest
-            np.random.choice(np.linspace(0.0001, 0.01)), #HG Consume
-            np.random.choice(np.linspace(0.0001, 0.01))) #Energy Consume
+    return (np.random.choice(np.linspace(nrg_harv_min, nrg_harv_max)), #Energy Harvest
+            np.random.choice(np.linspace(raw_harv_min, raw_harv_max)), #Raw Mat Harvest
+            np.random.choice(np.linspace(hg_min, hg_max)), #HG Consume
+            np.random.choice(np.linspace(ngr_min, nrg_max))) #Energy Consume
 
-def gen_clan_rates():
+def gen_clan_rates(clan_min, clan_max):
     '''
     Randomly generate clan global consumption rates
     Tones per tick
     '''
-    return (np.random.choice(np.linspace(0.01, 1.0)), 0.0)
+    return (np.random.choice(np.linspace(clan_min, clan_max)), 0.0)
 
-def gen_agent_vel_mag():
+def gen_agent_vel_mag(vel_min, vel_max):
     '''
     Randomly generate an agent max velocity magnitude
     Max velocities - init randomly so genetics pass the trait along
     '''
-    return np.random.choice(np.linspace(au2Ly(1.0), au2Ly(10.0)))
+    return np.random.choice(np.linspace(au2Ly(vel_min), au2Ly(vel_max)))
 
 
-#Probability generation
+#PROBABILITY GENERATION
 def positive_probs_lin(numSamps):
     '''
     Create a linear (y=x) distribution weighted toward higher numbers
@@ -101,37 +152,43 @@ def negative_probs_exp(numSamps):
     return positive_probs_exp(numSamps)[::-1]
 
 
-#GENETICS
+#GENETICS - All in config Doc
 
-def crossover_traits():
-    '''
-    List of all traits that can be crossed-over
-    '''
-    return ['vis', 'velMag', 'defence', 'offence']
-
-def vis_bounds():
-    '''
-    Min and max for visibility trait
-    '''
-    return au2Ly(0.1), au2Ly(50.0)
-
-def vel_mag_bounds():
-    '''
-    Min and max for vel_mag trait
-    '''
-    return au2Ly(1.0), au2Ly(10.0)
-
-def offence_bounds():
-    '''
-    Min and max for offence trait
-    '''
-    return 0.0, 1.0
-
-def mutation_bounds():
-    '''
-    Min and max for amount traits can be mutated by (%)
-    '''
-    return -0.1, 0.1
+# def crossover_traits():
+#     '''
+#     List of all traits that can be crossed-over
+#     '''
+#     return ['vis', 'velMag', 'defence', 'offence']
+#
+# def vis_bounds():
+#     '''
+#     Min and max for visibility trait
+#     '''
+#     return au2Ly(0.1), au2Ly(50.0)
+#
+# def vel_mag_bounds():
+#     '''
+#     Min and max for vel_mag trait
+#     '''
+#     return au2Ly(1.0), au2Ly(10.0)
+#
+# def offence_bounds():
+#     '''
+#     Min and max for offence trait
+#     '''
+#     return 0.0, 1.0
+#
+# def defence_bounds():
+#     '''
+#     Min and max for defence trait
+#     '''
+#     return 0.0, 1.0
+#
+# def mutation_bounds():
+#     '''
+#     Min and max for amount traits can be mutated by (%)
+#     '''
+#     return -0.1, 0.1
 
 
 

@@ -141,6 +141,9 @@ if __name__ == '__main__':
     print 'Done'
 
     '''
+    NEXT: keep working through config data to world doc - loads JSON, generate as required, then load to MONGO
+    NEXT: Templates will just be config data skew for mongo
+    NEXT: Need to remember we want the config data to be a one-stop-shop for altering world
     NEXT: The algorithm converges now, and fast - for explorers
     NEXT:  Get the explorers doing something - watch resourceknowledge bug
     NEXT: Graph other stuff, like % fit for all types, fitness scores
