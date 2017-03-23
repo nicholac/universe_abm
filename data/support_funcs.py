@@ -27,7 +27,8 @@ def load_config(master):
         else:
             raise Exception
         return config_data
-    except:
+    except Exception, err:
+        print 'Config load failed: {}'.format(err)
         return None
 
 
@@ -150,47 +151,4 @@ def negative_probs_exp(numSamps):
     Create a exponential distribution weighted toward lower numbers
     '''
     return positive_probs_exp(numSamps)[::-1]
-
-
-#GENETICS - All in config Doc
-
-# def crossover_traits():
-#     '''
-#     List of all traits that can be crossed-over
-#     '''
-#     return ['vis', 'velMag', 'defence', 'offence']
-#
-# def vis_bounds():
-#     '''
-#     Min and max for visibility trait
-#     '''
-#     return au2Ly(0.1), au2Ly(50.0)
-#
-# def vel_mag_bounds():
-#     '''
-#     Min and max for vel_mag trait
-#     '''
-#     return au2Ly(1.0), au2Ly(10.0)
-#
-# def offence_bounds():
-#     '''
-#     Min and max for offence trait
-#     '''
-#     return 0.0, 1.0
-#
-# def defence_bounds():
-#     '''
-#     Min and max for defence trait
-#     '''
-#     return 0.0, 1.0
-#
-# def mutation_bounds():
-#     '''
-#     Min and max for amount traits can be mutated by (%)
-#     '''
-#     return -0.1, 0.1
-
-
-
-
 

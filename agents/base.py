@@ -19,7 +19,7 @@ def idle(agent_doc, sysAgents, mongo_coll):
     agent_doc['activity'] = 0
 
 
-def star_jump(agent_doc, sysAgents, mongo_coll):
+def star_jump(agent_doc):
     '''
     Jump an agent between star systems
     - Just changes agent internal data - they agent is moved by world when it returns to the server
@@ -49,7 +49,7 @@ def system_move(agent_doc, sysAgents, mongo_coll):
     '''
     #Get the current dist to dest
     d = dist(agent_doc['destination'], agent_doc['position'])
-    time_step = mongo_coll.find({'_type':'world'}, {'timeStep':1}).next()['timeStep']
+    time_step = mongo_coll.find({'_type':'world'}).next()['universeInfo']['timeStep']
     #Snap to destination instead of flying straight past
     if d < agent_doc['velMag']*time_step or d < agent_doc['vis']:
         agent_doc['position'] = agent_doc['destination']

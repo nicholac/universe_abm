@@ -129,7 +129,7 @@ if __name__ == '__main__':
     reset = True
 
     if master == True and reset == True:
-        generate_world(universe_coll, True)
+        generate_world(universe_coll, True, True)
         generate_celestials(universe_coll, True)
         generate_clans(universe_coll, True)
         generate_agents(universe_coll, True)
