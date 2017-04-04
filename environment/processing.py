@@ -53,12 +53,10 @@ def process_genetics(mongo_coll):
     agents = list(mongo_coll.find({'_type':'agent'}))
     #Randomise agent selection
     idxs = range(len(agents))
-    print len(idxs)
     while len(idxs)!=0:
         i = np.random.choice(idxs)
         idxs.pop(idxs.index(i))
         agent = agents[i]
-    #for agent in agents:
         #Kill old agents - and some random young ones
         if age_kill(agent, world_doc['maxAge']) == True:
             agent['_type'] = 'deadAgent'

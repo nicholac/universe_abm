@@ -36,9 +36,6 @@ def mongify_config(config_data):
     Essentially the Mongo version mirrors the input JSON
     ::param Input config data
     '''
-    config_data['universeInfo']['solarSystemDims'] = [ au2Ly(config_data['universeInfo']['solarSystemDims'][0]),
-                                       au2Ly(config_data['universeInfo']['solarSystemDims'][1]),
-                                       au2Ly(config_data['universeInfo']['solarSystemDims'][2]) ]
     config_data['universeInfo']['starEnergyOpts'] = list(np.linspace(config_data['universeInfo']['starEnergyOpts']['min'],
                                                      config_data['universeInfo']['starEnergyOpts']['max']))
     config_data['universeInfo']['starRadiusOpts'] = list(np.linspace(au2Ly(config_data['universeInfo']['starRadiusOpts']['min']),
@@ -72,6 +69,9 @@ def mongify_config(config_data):
 def generate_celestials(mongo_coll, clean):
     '''
     Generate and store celestials in Mongo
+    Universe Dims are in Light years in config
+    Planets and everything else is in AU
+    All internal calcs are in LY
 
     ::param mongoColl Mongo Collection instantiated for celestials
     ::param clean boolean delete existing celestials
@@ -98,7 +98,8 @@ def generate_celestials(mongo_coll, clean):
     for idx, c in enumerate(starCoords):
         starDoc = world_doc['celestialInfo']['starInfo'].copy()
         starDoc['position']=list(c)
-        starDoc['radius']=np.random.choice(world_doc['universeInfo']['starRadiusOpts'])
+        #Convert to LY from AU
+        starDoc['radius']=np.random.choice([au2Ly(i) for i in world_doc['universeInfo']['starRadiusOpts']])
         starDoc['typeId']=np.random.choice(stars().keys())
         starDoc['energyStore']= np.random.choice(world_doc['universeInfo']['starEnergyOpts'])
         starDoc['epoch']=0
@@ -111,12 +112,12 @@ def generate_celestials(mongo_coll, clean):
                                            world_doc['universeInfo']['avgPlanets'],
                                            world_doc['universeInfo']['avgPlanets']*2.0]))
         #Generate coords for the entire system - initially these are relative to star centre
-        planetCoords = list(np.dstack([np.random.normal(world_doc['universeInfo']['solarSystemDims'][0]/2.0,
-                                                        world_doc['universeInfo']['solarSystemDims'][0]/3.0, size=numPlanets),
-                                        np.random.normal(world_doc['universeInfo']['solarSystemDims'][1]/2.0,
-                                                         world_doc['universeInfo']['solarSystemDims'][1]/3.0, size=numPlanets),
-                                        np.random.normal(world_doc['universeInfo']['solarSystemDims'][2]/2.0,
-                                                         world_doc['universeInfo']['solarSystemDims'][2]/3.0, size=numPlanets)])[0])
+        planetCoords = list(np.dstack([np.random.normal(au2Ly(world_doc['universeInfo']['solarSystemDims']['min']),
+                                                        au2Ly(world_doc['universeInfo']['solarSystemDims']['max']), size=numPlanets),
+                                        np.random.normal(au2Ly(world_doc['universeInfo']['solarSystemDims']['min']),
+                                                         au2Ly(world_doc['universeInfo']['solarSystemDims']['max']), size=numPlanets),
+                                        np.random.normal(au2Ly(world_doc['universeInfo']['solarSystemDims']['min']),
+                                                         au2Ly(world_doc['universeInfo']['solarSystemDims']['max']), size=numPlanets)])[0])
         for pidx, pc in enumerate(planetCoords):
             #Generate the planet class
             #Rebase coords relative to this star system
@@ -125,7 +126,7 @@ def generate_celestials(mongo_coll, clean):
             planetDoc = world_doc['celestialInfo']['planetInfo'].copy()
             planetDoc['starId'] = starId
             planetDoc['position']=list(coords)
-            planetDoc['radius']=np.random.choice(world_doc['universeInfo']['planetRadiusOpts'])
+            planetDoc['radius']=np.random.choice([au2Ly(i) for i in world_doc['universeInfo']['planetRadiusOpts']])
             planetDoc['typeId']=np.random.choice(planets().keys())
             planetDoc['energyStore']=np.random.choice(world_doc['universeInfo']['planetEnergyOpts'])
             planetDoc['rawMatStore']=np.random.choice(world_doc['universeInfo']['planetRawMatOpts'])

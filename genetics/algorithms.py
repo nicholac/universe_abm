@@ -26,16 +26,16 @@ def reproduce(agent_doc, mongo_coll, world_doc):
     Called per-agent, per epoch - on the master node after the system has been processed
     '''
     #Has the agent already reproduced?
-    #if agent_doc['parent'] == True:
-    #    return
+    if world_doc['universeInfo']['multiChildren'] == False:
+        if agent_doc['parent'] == True:
+            return False
     #Are we between the min max ages?
-    if agent_doc['epoch'] < world_doc['minAgeReprod'] or agent_doc['epoch'] > world_doc['maxAgeReprod']:
-        return
+    if agent_doc['epoch'] < world_doc['universeInfo']['minAgeReprod'] or agent_doc['epoch'] > world_doc['universeInfo']['maxAgeReprod']:
+        return False
     #Is the agent fit to reproduce - with any type?
     #Do this first so we get a pool of potential partners when at max pop
     fitness_chk = fitness_sametype(agent_doc, fitness_scoring_sametype(agent_doc,
                                                                        world_doc))
-    #NEXT: It gets stuck here when turning reqs back down because existing agemts dont get fitness recalculated
     #if agent_doc['canReproduce'] == False:
     #Is it fit to reproduce with its OWN TYPE
     if fitness_chk['canReprod'] == False:
@@ -43,7 +43,7 @@ def reproduce(agent_doc, mongo_coll, world_doc):
     #Any Type:
     #if not any([i['canReprod'] for i in fitness_chk]) == True:
         #Not fit for anything
-        return
+        return False
     else:
         #Update agent
         agent_doc['canReproduce'] = True
@@ -53,10 +53,10 @@ def reproduce(agent_doc, mongo_coll, world_doc):
     #TODO: This should be clan max popn not world
     #cnt = mongo_coll.find({'_type':'agent', 'clanId':agent_doc['clanId']}).count()
     cnt = mongo_coll.find({'_type':'agent'}).count()
-    if cnt >= world_doc['maxPopn']:
+    if cnt >= world_doc['universeInfo']['maxPopn']:
         #Store agent and return
         mongo_coll.update({'_id':agent_doc['_id']}, agent_doc)
-        return
+        return False
 
     #Can Reproduce - Find a partner in same clan - randomise select
     #For mixed breeding:
@@ -71,7 +71,7 @@ def reproduce(agent_doc, mongo_coll, world_doc):
         #No valid partners in clan
         mongo_coll.update({'_id':agent_doc['_id']}, agent_doc)
         #print 'No partners'
-        return
+        return False
     #Select a partner - weighted toward fitter partners
     #print 'Partners:{}'.format(partners)
 
@@ -79,7 +79,7 @@ def reproduce(agent_doc, mongo_coll, world_doc):
     scores = []
     for p in partners:
         #Only explorers at this stage
-        scores.append(p['fitScore'])
+        scores.append(p['reproduceOpts']['fitScore'])
     #Convert in probs - get sum of all scores, convert scores to proportion of sum
     #print 'scores:{}'.format(scores)
     #try:
@@ -109,7 +109,8 @@ def reproduce(agent_doc, mongo_coll, world_doc):
              world_doc['gaInfo']['crossoverTraits'],
              world_doc['gaInfo']['mutationBounds']['min'],
              world_doc['gaInfo']['mutationBounds']['max'])
-    mutation(child_2, world_doc['gaInfo']['crossoverTraits'],
+    mutation(child_2,
+             world_doc['gaInfo']['crossoverTraits'],
              world_doc['gaInfo']['mutationBounds']['min'],
              world_doc['gaInfo']['mutationBounds']['max'])
 
@@ -122,6 +123,7 @@ def reproduce(agent_doc, mongo_coll, world_doc):
     child_1['destination'] = []
     child_1['starId'] = clan_doc['starId']
     child_1['parent'] = False
+    child_1['childOf'] = [agent_doc['_id'], partner_doc['_id']]
     child_1['canReproduce'] = False
     child_1['reproduceOpts'] = None
     child_1['epoch'] = 0
@@ -132,6 +134,7 @@ def reproduce(agent_doc, mongo_coll, world_doc):
     child_2['destination'] = []
     child_2['starId'] = clan_doc['starId']
     child_2['parent'] = False
+    child_2['childOf'] = [agent_doc['_id'], partner_doc['_id']]
     child_2['canReproduce'] = False
     child_2['reproduceOpts'] = None
     child_2['epoch'] = 0
@@ -150,6 +153,8 @@ def reproduce(agent_doc, mongo_coll, world_doc):
     mongo_coll.update({'_id':partner_doc['_id']}, partner_doc)
     mongo_coll.insert(child_1)
     mongo_coll.insert(child_2)
+
+    return True
 
 
 
@@ -206,6 +211,7 @@ def fitness_crosstype(agent, fitness_doc):
                 'canReprod':chk,
                 'fitScore':fitScore}
         else:
+            #TODO: Make some sensible score for how unfit the agent is - rather than just not fit
             d = {'_type':k,
                 'canReprod':chk,
                 'fitScore':0.0}
@@ -222,25 +228,21 @@ def crossover(agent_1, agent_2, trait_list, gene_split_pos):
     '''
     #Build the Chromosomes
     chromo_1 = []
-    for i in agent_1.keys():
-        if i in trait_list:
-            chromo_1.append(agent_1[i])
     chromo_2 = []
-    for i in agent_2.keys():
-        if i in trait_list:
-            chromo_2.append(agent_2[i])
+    for t in trait_list:
+        try:
+            chromo_1.append(agent_1[t])
+            chromo_2.append(agent_2[t])
+        except KeyError:
+            pass
     #Crossover
     child_1_chromo = chromo_2[:gene_split_pos]+chromo_1[gene_split_pos:]
     child_2_chromo = chromo_1[:gene_split_pos]+chromo_2[gene_split_pos:]
-    #print chromo_1, chromo_2, child_2_chromo
-    #Pick what the new agent type will be (the mating may not be between same type)
-    #child_1_type = np.random.choice([agent_1['_type'], agent_2['_type']])
-    #child_2_type = np.random.choice([agent_1['_type'], agent_2['_type']])
     #Create two new agent docs - clone parent first -
     child_1_doc = copy.deepcopy(agent_1)
     #Reset ID
     child_1_doc.pop('_id')
-    #Insert the mutated traits
+    #Insert the traits
     for idx, trait in enumerate(child_1_chromo):
         child_1_doc[trait_list[idx]] = trait
 
@@ -276,16 +278,21 @@ def fitness_scoring_sametype(agent_doc, world_doc):
     2=Harvestor
     3=Soldier
     '''
-    out = {}
-    #Flip the agent types lookup
-    aType = world_doc['universeInfo']['agentTypes'].keys()[world_doc['universeInfo']['agentTypes'].values().index(agent_doc['agentType'])]
-    reqs = world_doc['gaInfo']['fitnessReqs'][aType]
-    for k in reqs.keys():
-        reqs[k]['val'] = au2Ly(reqs[k]['val'])
-        if reqs[k]['operator'] == 'gte':
-            reqs[k]['operator'] = np.greater
-        elif reqs[k]['operator'] == 'lte':
-            reqs[k]['operator'] = np.less
+    #Flip the agent types lookup - to get name of
+    #aType = world_doc['universeInfo']['agentTypes'].keys()[world_doc['universeInfo']['agentTypes'].values().index(agent_doc['agentType'])]
+    #TODO: This whole string and agentType thing is horrible - sort it
+    reqs = world_doc['gaInfo']['fitnessReqs'][str(agent_doc['agentType'])]
+    out = copy.deepcopy(reqs)
+    for k in out.keys():
+        #Convert as required
+        if out[k]['units'] == 'au':
+            #All internal coords are in LY
+            out[k]['val'] = au2Ly(reqs[k]['val'])
+        #TODO: Same conversion for conflict
+        if out[k]['operator'] == 'gte':
+            out[k]['operator'] = np.greater_equal
+        elif out[k]['operator'] == 'lte':
+            out[k]['operator'] = np.less_equal
         else:
             print 'Unknown operator for fitness_score'
             return

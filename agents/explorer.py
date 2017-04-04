@@ -12,6 +12,8 @@ from environment.sensing import dist
 def get_starsys(agent_doc, sys_agent_coords, mongo_coll):
     '''
     Get a star system to explore - next from clan
+    Updates clan on the DB
+    Updates agent locally
     '''
     clan_doc = mongo_coll.find({'_id':agent_doc['clanId']}).next()
     subset = [i for i in clan_doc['starCatalogue'] if i['_id'] not in [j['starId'] for j in clan_doc['resourceKnowledge']]]
@@ -20,12 +22,12 @@ def get_starsys(agent_doc, sys_agent_coords, mongo_coll):
         #Set Idle
         agent_doc['actyData'] = {}
         agent_doc['actyData']['actyId'] = 0
-        agent_doc['actyData']['actyIdx'] = 01
+        agent_doc['actyData']['actyIdx'] = 0
         agent_doc['actyGroup'] = 0
         agent_doc['destination'] = []
         agent_doc['actyData']['complete'] = True
         return
-    #Get subset of unknown (star catalogue contains everything)
+    #Get the closest star that is unexplored
     closestStar = subset[np.argmin([np.linalg.norm(np.array(agent_doc['position'])-x['position']) for x in subset])]
     #Set as destination and add to resource knowledge - as blank so the other agents know its taken
     #This only works in-system!, because the doc remains local until system is processed
@@ -52,7 +54,9 @@ def deposit_knowledge(agent_doc, sys_agent_coords, mongo_coll):
     #Remind ourselves which star system these planets came from
     starId = mongo_coll.find({'_id':agent_doc['actyData']['planets'][0]['_id']},
                              {'starId':1}).next()['starId']
+    #Find the Clan Doc for this agent
     clan_doc = mongo_coll.find({'_id':agent_doc['clanId']}).next()
+    #Update the local clan doc list
     [i for i in clan_doc['resourceKnowledge'] if i['starId'] == starId][0]['planets'] = agent_doc['actyData']['planets']
     #TODO: This is working on a local copy of the clan doc which is dangerous if other stuff is editing it
     #We are only updating the resource knowledge to make it a bit safer but needs checking
@@ -72,6 +76,7 @@ def deposit_knowledge(agent_doc, sys_agent_coords, mongo_coll):
 def visit_planets(agent_doc, sys_agent_coords, mongo_coll):
     '''
     Visit all System planets in turn and scan each
+    Presumes we are already in the system we want to explore
     '''
     #Populate list of planets to visit if not already
     try:
@@ -79,7 +84,7 @@ def visit_planets(agent_doc, sys_agent_coords, mongo_coll):
     except KeyError:
         #No planets yet - Populate the list of planets in this system
         planets = list(mongo_coll.find({'_type':'planet', 'starId':agent_doc['starId']},
-                                       {'_id':1}))
+                                       {'_id':1, 'position':1}))
         agent_doc['actyData']['planets'] = []
         for i in planets:
             agent_doc['actyData']['planets'].append({'_id':i['_id'],
@@ -88,18 +93,17 @@ def visit_planets(agent_doc, sys_agent_coords, mongo_coll):
                                                       'rawMatStore':None})
         #Set the first one as the the current target
         agent_doc['actyData']['planetTgtId'] = agent_doc['actyData']['planets'][0]['_id']
-        agent_doc['destination'] = np.array(mongo_coll.find({'_id':agent_doc['actyData']['planets'][0]['_id']},
-                                                            {'position':1}).next()['position'])
+        agent_doc['destination'] = np.array(planets[0]['position'])
 
     #Do we have a current planet target?
     if agent_doc['actyData']['planetTgtId'] != None:
         #Are we in range to collect data?
         if dist(agent_doc['destination'], agent_doc['position']) < agent_doc['vis']:
             #Collect data
-            energy, rawMat = check_planet_resources(mongo_coll, agent_doc['actyData']['planetTgtId'])
+            energy, raw_mat = check_planet_resources(mongo_coll, agent_doc['actyData']['planetTgtId'])
             planet = [i for i in agent_doc['actyData']['planets'] if i['_id'] == agent_doc['actyData']['planetTgtId']][0]
             planet['energyStore'] = energy
-            planet['rawMatStore'] = rawMat
+            planet['rawMatStore'] = raw_mat
             #Set visited
             planet['visited'] = True
             #Set target ID to None - gets picked up next time

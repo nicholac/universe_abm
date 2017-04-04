@@ -11,14 +11,14 @@
 	"universeInfo":{
 					"procTimePerEpoch": 0.0,
 	                "numStars":200,
-	                "universeDims":[100.0, 100.0, 100.0],
-	                "solarSystemDims":[10.0, 10.0, 10.0],
+	                "universeDims":[10.0, 10.0, 10.0],
+	                "solarSystemDims":{"min":5.0, "max":30.0},
 	                "avgPlanets":5,
 	                "starEnergyOpts":{"min":1000.0, "max":100000.0},
-	                "starRadiusOpts":{"min":0.0001, "max":0.1},
+	                "starRadiusOpts":{"min":0.0046, "max":0.046},
 	                "planetEnergyOpts":{"min":0.0, "max":1000.0},
 	                "planetRawMatOpts":{"min":0.0, "max":1000.0},
-	                "planetRadiusOpts":{"min":0.000001, "max":0.001},
+	                "planetRadiusOpts":{"min":0.000004, "max":0.0004},
 	                "timeStep": 0.1,
 	                "epoch":1,
 	                "runTime": 0.0,
@@ -31,6 +31,7 @@
 	                "maxAge": 500,
 	                "minAgeReprod":50,
 	                "maxAgeReprod": 300,
+	                "multiChildren":false,
 	                "agentTypeMix":[100.0, 0.0, 0.0, 0.0],
 	                "starCoords":[],
 	                "popnOverTime":[],
@@ -64,27 +65,32 @@
                 "generationFitness":""
 	},
 	"gaInfo":{
-				"crossoverTraits":["vis", "velMag", "defence", "offence"],
-				"mutationBounds":{"min":-0.1, "max":0.1},
+				"crossoverTraits":["vis", "velMag", "offence", "defence"],
+				"mutationBounds":{"min":-0.05, "max":0.05},
 				"fitnessReqs":{
-					"explorer":{
-									"vis":{"val":3.0, "operator":"gte"},
-									"velMag":{"val":4.0, "operator":"gte"},
-									"defence":{"val":0.1, "operator":"gte"}
+					"0":{
+									"vis":{"val":3.0, "operator":"gte", "units":"au"},
+									"velMag":{"val":4.0, "operator":"gte", "units":"au"},
+									"offence":{"val":0.0, "operator":"gte", "units":"conflict"},
+									"defence":{"val":0.1, "operator":"gte", "units":"conflict"}
 								},
-					"harvestor":{
-									"velMag":{"val":7.0, "operator":"gte"},
-									"defence":{"val":3.0, "operator":"gte"}
+					"1":{
+									"vis":{"val":0.0, "operator":"gte", "units":"au"},
+									"velMag":{"val":7.0, "operator":"gte", "units":"au"},
+									"offence":{"val":0.0, "operator":"gte", "units":"conflict"},
+									"defence":{"val":3.0, "operator":"gte", "units":"conflict"}
 								},
-					"trader":{
-									"velMag":{"val":4.0, "operator":"gte"},
-									"defence":{"val":3.0, "operator":"gte"}
+					"2":{
+									"vis":{"val":0.0, "operator":"gte", "units":"au"},
+									"velMag":{"val":4.0, "operator":"gte", "units":"au"},
+									"offence":{"val":0.0, "operator":"gte", "units":"conflict"},
+									"defence":{"val":3.0, "operator":"gte", "units":"conflict"}
 								},
-					"soldier":{
-									"vis":{"val":3.0, "operator":"gte"},
-									"velMag":{"val":7.0, "operator":"gte"},
-									"defence":{"val":3.0, "operator":"gte"},
-									"offence":{"val":3.0, "operator":"gte"}
+					"3":{
+									"vis":{"val":3.0, "operator":"gte", "units":"au"},
+									"velMag":{"val":7.0, "operator":"gte", "units":"au"},
+									"offence":{"val":3.0, "operator":"gte", "units":"conflict"},
+									"defence":{"val":3.0, "operator":"gte", "units":"conflict"}
 								}
 				}
 	},
@@ -135,7 +141,7 @@
 					         "vis":"Range of visibility",
 					         "reprodChance":"Chance of reproduction",
 					         "socialLinkAgeRate":"Rate at which the agents social network ages",
-					         "velMag":"Velocity magnitude",
+					         "velMag":"Velocity magnitude - in LY - everything is in LY",
 					         "parent":"Whether the agent has already reproduced",
 					         "actyGroup":"Current agent activity group",
 					         "actyData":"Activity data",
@@ -163,6 +169,7 @@
 							"reproduceOpts":[],
 							"generation":0,
 							"parent":false,
+							"childOf":[],
 							"actyGroup":0,
 							"actyData":{"complete":false,
 							            "actyId":0,
@@ -178,8 +185,8 @@
 							"epoch":0,
 							"messages":[],
 							"generation":0,
-							"visBounds":{"min":0.1, "max":50.0},
-							"velMagBounds":{"min":1.0, "max":10.0},
+							"visBounds":{"min":1.0, "max":5.0},
+							"velMagBounds":{"min":0.5, "max":1.0},
 							"offenceBounds":{"min":0.01, "max":1.0},
 							"defenceBounds":{"min":0.01, "max":1.0},
 							"rawMatCap":{"min":10.0, "max":100.0},
@@ -203,6 +210,7 @@
 							"reproduceOpts":[],
 							"generation":0,
 							"parent":false,
+							"childOf":[],
 							"actyGroup":0,
 							"actyData":{"complete":false,
 							            "actyId":0,
@@ -214,8 +222,8 @@
 							"epoch":0,
 							"messages":[],
 							"generation":0,
-							"visBounds":{"min":0.1, "max":50.0},
-							"velMagBounds":{"min":1.0, "max":10.0},
+							"visBounds":{"min":0.1, "max":0.25},
+							"velMagBounds":{"min":0.05, "max":0.1},
 							"offenceBounds":{"min":0.01, "max":1.0},
 							"defenceBounds":{"min":0.01, "max":1.0},
 							"rawMatCap":{"min":10.0, "max":100.0},
@@ -239,6 +247,7 @@
 							"reproduceOpts":[],
 							"generation":0,
 							"parent":false,
+							"childOf":[],
 							"actyGroup":0,
 							"actyData":{"complete":false,
 							            "actyId":0,
@@ -250,8 +259,8 @@
 							"epoch":0,
 							"messages":[],
 							"generation":0,
-							"visBounds":{"min":0.1, "max":50.0},
-							"velMagBounds":{"min":1.0, "max":10.0},
+							"visBounds":{"min":0.1, "max":0.25},
+							"velMagBounds":{"min":0.1, "max":0.75},
 							"offenceBounds":{"min":0.01, "max":1.0},
 							"defenceBounds":{"min":0.01, "max":1.0},
 							"rawMatCap":{"min":10.0, "max":100.0},
@@ -275,6 +284,7 @@
 							"reproduceOpts":[],
 							"generation":0,
 							"parent":false,
+							"childOf":[],
 							"actyGroup":0,
 							"actyData":{"complete":false,
 							            "actyId":0,
@@ -286,8 +296,8 @@
 							"epoch":0,
 							"messages":[],
 							"generation":0,
-							"visBounds":{"min":0.1, "max":50.0},
-							"velMagBounds":{"min":1.0, "max":10.0},
+							"visBounds":{"min":1.0, "max":5.0},
+							"velMagBounds":{"min":0.01, "max":0.5},
 							"offenceBounds":{"min":0.01, "max":1.0},
 							"defenceBounds":{"min":0.01, "max":1.0},
 							"rawMatCap":{"min":10.0, "max":100.0},
